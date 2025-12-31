@@ -6,6 +6,8 @@ int main(int argc, char** argv) {
 	int regimeChoice = -1;
 	int worldChoice = -1;
 	int gameTime = 0;
+	int x = 0;
+	int y = 0;
 	_Bool isPaused = 0;
 
 	printf("****Hlavné menu****\n");
@@ -35,6 +37,14 @@ int main(int argc, char** argv) {
 		printf("[2] S prekážkami\n");
 
 		scanf("%d", &worldChoice);
+
+		printf("Zadaj výšku herného sveta\n");
+		scanf("%d", &y);
+	
+		printf("Zadaj šírku herného sveta\n");
+		scanf("%d", &x);
+
+
 
 	}
 
