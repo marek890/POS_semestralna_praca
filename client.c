@@ -1,5 +1,9 @@
+#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <string.h>
 
 int main(int argc, char** argv) {
 	int menuChoice = -1;
@@ -49,7 +53,27 @@ int main(int argc, char** argv) {
 	}
 
 	if (menuChoice == 2) {
+		int client_fd;
+		client_fd = socket(AF_INET, SOCK_STREAM, 0);
+		if (client_fd < 0) {
+			perror("Vytvorenie socketu zlyhalo\n");
+			return 1;
+		}
 
+		struct sockaddr_in server_addr;
+		memset(&server_addr, 0, sizeof(server_addr));
+		server_addr.sin_family = AF_INET;
+		server_addr.sin_port = htons(4521);
+
+		if (inet_pton(AF_INET, "127.0.0.1", (struct sockaddr*)&server_addr.sin_addr) < 0) {
+			perror("Adresa je neplatna\n");
+			return 2;
+		}
+
+		if (connect(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
+			perror("Pripojenie k serveru zlyhalo\n");
+			return 3;
+		}
 	}
 	
 	return 0;
