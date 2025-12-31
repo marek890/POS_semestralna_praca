@@ -1,0 +1,46 @@
+#include <netinet/in.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/socket.h>
+#include <pthread.h>
+
+#define MAX_CLIENTS 10
+
+int main(int argc, char** argv) {
+	if (argc != 2) {
+		fprintf(stderr, "Nesprávny počet argumentov\n");
+		return 1;
+	}
+
+	int server_fd;
+
+	server_fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (server_fd < 0) {
+		perror("Chyba pri vytvárani socketu\n");
+		return 2;
+	}
+
+	int opt = 1;
+	setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+	struct sockaddr_in addr;
+	memset(&addr, 0, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = INADDR_ANY;
+	addr.sin_port = htons(argv[1]);
+
+	if (bind(server_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+		perror("Chyba pri binde\n");
+		close(server_fd);
+		return 3;
+	}
+
+	if (listen(server_fd, MAX_CLIENTS) < 0) {
+		perror("Listen zlyhal\n");
+		close(server_fd);
+		return 4;
+	}
+
+	close(server_fd);
+	return 0;
+}
