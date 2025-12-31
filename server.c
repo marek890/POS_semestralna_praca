@@ -3,10 +3,13 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <pthread.h>
+#include <string.h>
+#include <unistd.h>
 
 #define MAX_CLIENTS 10
 
-void* accept_clients(void* arg) {	
+void* accept_clients(void* arg) {
+	int server_fd = *(int*)arg;
 	while (1) {
 		int client_fd = accept(server_fd, NULL, NULL);
 		if (client_fd < 0) continue;
@@ -36,7 +39,7 @@ int main(int argc, char** argv) {
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = INADDR_ANY;
-	addr.sin_port = htons(argv[1]);
+	addr.sin_port = htons(atoi(argv[1]));
 
 	if (bind(server_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
 		perror("Chyba pri binde\n");
@@ -51,7 +54,7 @@ int main(int argc, char** argv) {
 	}
 
 	pthread_t accept_th;
-	pthread_create(&accept_th, NULL, accept_clients, NULL);
+	pthread_create(&accept_th, NULL, accept_clients, &server_fd);
 
 	close(server_fd);
 	return 0;
