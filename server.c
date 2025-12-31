@@ -6,6 +6,15 @@
 
 #define MAX_CLIENTS 10
 
+void* accept_clients(void* arg) {	
+	while (1) {
+		int client_fd = accept(server_fd, NULL, NULL);
+		if (client_fd < 0) continue;
+
+		printf("Klient sa pripojil!\n");
+	}
+} 
+
 int main(int argc, char** argv) {
 	if (argc != 2) {
 		fprintf(stderr, "Nesprávny počet argumentov\n");
@@ -40,6 +49,9 @@ int main(int argc, char** argv) {
 		close(server_fd);
 		return 4;
 	}
+
+	pthread_t accept_th;
+	pthread_create(&accept_th, NULL, accept_clients, NULL);
 
 	close(server_fd);
 	return 0;
