@@ -42,9 +42,8 @@ void* server_shutdown(void* arg) {
 	int countdown = 10;
 
 	while (countdown != 0) {
-		pthread_mutex_lock(&data->mutex);
 		if (data->clientCount == 0) {
-			printf("Server sa vypne za %d sekund.\n", countdown);
+			printf("Server sa vypne za %d sekúnd.\n", countdown);
 			sleep(1);
 			countdown--;
 			if (countdown == 0)
@@ -52,10 +51,9 @@ void* server_shutdown(void* arg) {
 		}
 		else
 			countdown = 10;
-		pthread_mutex_unlock(&data->mutex);
 	}
 
-	printf("Server je vypnutý!\n}");
+	printf("Server je vypnutý!\n");
 
 	return NULL;
 }
@@ -104,7 +102,7 @@ int main(int argc, char** argv) {
 	pthread_create(&accept_th, NULL, accept_clients, &data);
 	pthread_create(&shutdown_th, NULL, server_shutdown, &data);
 
-	pthread_join(accept_th, NULL);
+	pthread_detach(accept_th);
 	pthread_join(shutdown_th, NULL);
 
 	pthread_mutex_destroy(&data.mutex);
