@@ -32,22 +32,18 @@ int connected(int port) {
 	}
 
 	while (1) {
-		memset(buffer, 0, BUFFER_SIZE);
 		
-		int read = recv(client_fd, buffer, BUFFER_SIZE - 1, 0);
-		if (read < 0) {
-			printf("Klient odpojeny\n");
-			break;
-		}
-		
+		send(client_fd, buffer, strlen(buffer), 0);
+
 		if (strncmp(buffer, "q", 1) == 0) {
 			printf("Klient ukončuje spojenie\n");
 			break;
 		}
 
-		send(client_fd, buffer, strlen(buffer), 0);
+		memset(buffer, 0, BUFFER_SIZE);
+		
 	}
-
+	close(client_fd);
 	return 0;
 
 }
