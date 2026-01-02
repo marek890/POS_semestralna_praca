@@ -5,6 +5,54 @@
 #include <arpa/inet.h>
 #include <string.h>
 
+#define BUFFER_SIZE 1024
+
+int connected(int port) {
+	char buffer[BUFFER_SIZE];
+	int client_fd;
+	client_fd = socket(AF_INET, SOCK_STREAM, 0);
+	
+	if (client_fd < 0) {
+		perror("Vytvorenie socketu zlyhalo\n");
+		return 1;
+	}
+	struct sockaddr_in server_addr;
+	memset(&server_addr, 0, sizeof(server_addr));		
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port = htons(port);
+
+	if (inet_pton(AF_INET, "127.0.0.1", (struct sockaddr*)&server_addr.sin_addr) < 0) {
+		perror("Adresa je neplatna\n");
+		return 2;
+	}
+
+	if (connect(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
+		perror("Pripojenie k serveru zlyhalo\n");
+		return 3;
+	}
+
+	while (1) {
+		memset(buffer, 0, BUFFER_SIZE);
+		
+		int read = recv(client_fd, buffer, BUFFER_SIZE - 1, 0);
+		if (read < 0) {
+			printf("Klient odpojeny\n");
+			break;
+		}
+		
+		if (strncmp(buffer, "q", 1) == 0) {
+			printf("Klient ukončuje spojenie\n");
+			break;
+		}
+
+		send(client_fd, buffer, strlen(buffer), 0);
+	}
+
+	return 0;
+
+}
+
+
 int main(int argc, char** argv) {
 	int menuChoice = -1;
 	int regimeChoice = -1;
@@ -13,6 +61,7 @@ int main(int argc, char** argv) {
 	int x = 0;
 	int y = 0;
 	_Bool isPaused = 0;
+	int port = htons(atoi(argv[1]));
 
 	printf("****Hlavné menu****\n");
 	printf("[1] Nová hra\n");
@@ -47,33 +96,10 @@ int main(int argc, char** argv) {
 	
 		printf("Zadaj šírku herného sveta\n");
 		scanf("%d", &x);
-
-
-
 	}
 
 	if (menuChoice == 2) {
-		int client_fd;
-		client_fd = socket(AF_INET, SOCK_STREAM, 0);
-		if (client_fd < 0) {
-			perror("Vytvorenie socketu zlyhalo\n");
-			return 1;
-		}
-
-		struct sockaddr_in server_addr;
-		memset(&server_addr, 0, sizeof(server_addr));
-		server_addr.sin_family = AF_INET;
-		server_addr.sin_port = htons(4521);
-
-		if (inet_pton(AF_INET, "127.0.0.1", (struct sockaddr*)&server_addr.sin_addr) < 0) {
-			perror("Adresa je neplatna\n");
-			return 2;
-		}
-
-		if (connect(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
-			perror("Pripojenie k serveru zlyhalo\n");
-			return 3;
-		}
+		connected(port);
 	}
 	
 	return 0;
