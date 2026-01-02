@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
 	int x = 0;
 	int y = 0;
 	_Bool isPaused = 0;
-	int port = htons(atoi(argv[1]));
+	int port = atoi(argv[1]);
 
 	printf("****Hlavné menu****\n");
 	printf("[1] Nová hra\n");
