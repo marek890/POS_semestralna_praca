@@ -12,6 +12,7 @@
 typedef struct {
 	int clientCount;
 	int server_fd;
+	_Bool isOff;
 	sem_t space;
 	sem_t clients;
 	pthread_mutex_t mutex;
@@ -20,7 +21,7 @@ typedef struct {
 void* accept_clients(void* arg) {
 	data_t* data = (data_t*)arg;
 
-	while (1) {
+	while (!data->isOff) {
 
 		int client_fd = accept(data->server_fd, NULL, NULL);
 		if (client_fd < 0) continue;
@@ -46,11 +47,15 @@ void* server_shutdown(void* arg) {
 			printf("Server sa vypne za %d sekund.\n", countdown);
 			sleep(1);
 			countdown--;
+			if (countdown == 0)
+				data->isOff = 1;
 		}
 		else
 			countdown = 10;
 		pthread_mutex_unlock(&data->mutex);
 	}
+
+	printf("Server je vypnutý!\n}");
 
 	return NULL;
 }
@@ -90,6 +95,7 @@ int main(int argc, char** argv) {
 		return 4;
 	}
 	data.clientCount = 0;
+	data.isOff = 0;
 	pthread_mutex_init(&data.mutex, NULL);
 	sem_init(&data.space, 0, MAX_CLIENTS);
 	sem_init(&data.clients, 0, 0);
