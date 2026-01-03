@@ -33,6 +33,11 @@ int connected(int port) {
 	}
 
 	while (1) {
+
+		if (fgets(buffer, BUFFER_SIZE, stdin) == NULL) 
+			break;
+		
+
 		send(client_fd, buffer, strlen(buffer), 0);
 
 		if (strncmp(buffer, "q", 1) == 0) {
