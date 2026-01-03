@@ -6,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <semaphore.h>
+#include <fcntl.h>
 
 #define MAX_CLIENTS 5
 #define BUFFER_SIZE 1024
@@ -49,6 +50,7 @@ void* client_message(void* arg) {
 	}
 	pthread_mutex_lock(&data->mutex);	
 	data->clientCount--;
+	sem_post(&data->space);
 	pthread_mutex_unlock(&data->mutex);
 	close(client->client_fd);
 	free(client);
@@ -58,7 +60,13 @@ void* client_message(void* arg) {
 void* accept_clients(void* arg) {
 	data_t* data = (data_t*)arg;
 
-	while (!data->isOff) {
+	while (1) {
+		pthread_mutex_lock(&data->mutex);
+		if (data->isOff) {
+			pthread_mutex_unlock(&data->mutex);
+			break;
+		}
+		pthread_mutex_unlock(&data->mutex);
 
 		int client_fd = accept(data->server_fd, NULL, NULL);
 		if (client_fd < 0) continue;
@@ -80,7 +88,6 @@ void* accept_clients(void* arg) {
 		pthread_detach(client_th);
 
 	}
-
 	return NULL;
 }
 
@@ -88,18 +95,26 @@ void* server_shutdown(void* arg) {
 	data_t* data = (data_t*)arg;
 	int countdown = 10;
 
-	while (countdown != 0) {
-		if (data->clientCount == 0) {
+	while (countdown != 0) {	
+		pthread_mutex_lock(&data->mutex);
+		int count = data->clientCount;
+		pthread_mutex_unlock(&data->mutex);
+
+		if (count == 0) {
 			printf("Server sa vypne za %d sekúnd.\n", countdown);
 			sleep(1);
 			countdown--;
-			if (countdown == 0)
+
+			if (countdown == 0) {
+				pthread_mutex_lock(&data->mutex);
 				data->isOff = 1;
+				close(data->server_fd);
+				pthread_mutex_unlock(&data->mutex);
+			}
 		}
 		else
 			countdown = 10;
 	}
-
 	printf("Server je vypnutý!\n");
 
 	return NULL;
@@ -139,6 +154,9 @@ int main(int argc, char** argv) {
 		close(data.server_fd);
 		return 4;
 	}
+	int flags = fcntl(data.server_fd, F_GETFL, 0);
+	fcntl(data.server_fd, F_SETFL, flags | O_NONBLOCK);
+
 	data.clientCount = 0;
 	data.isOff = 0;
 	data.in = 0;
@@ -151,12 +169,11 @@ int main(int argc, char** argv) {
 	pthread_create(&accept_th, NULL, accept_clients, &data);
 	pthread_create(&shutdown_th, NULL, server_shutdown, &data);
 
-	pthread_detach(accept_th);
+	pthread_join(accept_th, NULL);
 	pthread_join(shutdown_th, NULL);
 
 	pthread_mutex_destroy(&data.mutex);
 	sem_destroy(&data.space);
 	sem_destroy(&data.clients);
-	close(data.server_fd);
 	return 0;
 }
