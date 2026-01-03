@@ -8,9 +8,11 @@
 #include <semaphore.h>
 
 #define MAX_CLIENTS 10
+#define BUFFER_SIZE 1024
 
 typedef struct {
 	int clientCount;
+	int client_fd;
 	int server_fd;
 	_Bool isOff;
 	sem_t space;
@@ -18,13 +20,40 @@ typedef struct {
 	pthread_mutex_t mutex;
 } data_t;
 
+void* client_message(void* arg) {
+	data_t* data = (data_t*)arg;
+	char buffer[BUFFER_SIZE];
+
+	while (1) {
+		memset(buffer, 0, BUFFER_SIZE);
+
+		int read = recv(data->client_fd, buffer, BUFFER_SIZE - 1, 0);
+		if (read <= 0) {
+			printf("Klient sa odpojil!\n");
+			break;
+		}
+		
+		printf("Prijata sprava: %s\n", buffer);
+
+		if (strncmp(buffer, "q", 1) == 0 ) {
+			printf("Ukončujem spojenie\n");
+			break;
+		}
+
+	}
+	
+	data->clientCount--;
+	close(data->client_fd);
+	return NULL;
+}
+
 void* accept_clients(void* arg) {
 	data_t* data = (data_t*)arg;
 
 	while (!data->isOff) {
 
-		int client_fd = accept(data->server_fd, NULL, NULL);
-		if (client_fd < 0) continue;
+		data->client_fd = accept(data->server_fd, NULL, NULL);
+		if (data->client_fd < 0) continue;
 
 		sem_wait(&data->space);
 		pthread_mutex_lock(&data->mutex);
@@ -32,6 +61,9 @@ void* accept_clients(void* arg) {
 		printf("Klient sa pripojil!\n");
 		pthread_mutex_unlock(&data->mutex);
 		sem_post(&data->clients);
+		pthread_t client;
+		pthread_create(&client, NULL, client_message, data);
+		pthread_join(client, NULL);
 	}
 
 	return NULL;
