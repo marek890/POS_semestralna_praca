@@ -7,12 +7,12 @@
 #include <unistd.h>
 #include <semaphore.h>
 
-#define MAX_CLIENTS 10
+#define MAX_CLIENTS 5
 #define BUFFER_SIZE 1024
 
 typedef struct {
 	int clientCount;
-	int client_fd;
+	int in, out;
 	int server_fd;
 	_Bool isOff;
 	sem_t space;
@@ -20,14 +20,20 @@ typedef struct {
 	pthread_mutex_t mutex;
 } data_t;
 
+typedef struct {
+	int client_fd;
+	data_t* data;
+} client_data_t;
+
 void* client_message(void* arg) {
-	data_t* data = (data_t*)arg;
+	client_data_t* client = (client_data_t*)arg;
+	data_t* data = client->data;
 	char buffer[BUFFER_SIZE];
 
 	while (1) {
 		memset(buffer, 0, BUFFER_SIZE);
 
-		int read = recv(data->client_fd, buffer, BUFFER_SIZE - 1, 0);
+		int read = recv(client->client_fd, buffer, BUFFER_SIZE - 1, 0);
 		if (read <= 0) {
 			printf("Klient sa odpojil!\n");
 			break;
@@ -41,9 +47,11 @@ void* client_message(void* arg) {
 		}
 
 	}
-	
+	pthread_mutex_lock(&data->mutex);	
 	data->clientCount--;
-	close(data->client_fd);
+	pthread_mutex_unlock(&data->mutex);
+	close(client->client_fd);
+	free(client);
 	return NULL;
 }
 
@@ -52,18 +60,25 @@ void* accept_clients(void* arg) {
 
 	while (!data->isOff) {
 
-		data->client_fd = accept(data->server_fd, NULL, NULL);
-		if (data->client_fd < 0) continue;
+		int client_fd = accept(data->server_fd, NULL, NULL);
+		if (client_fd < 0) continue;
+		
+		client_data_t* client = malloc(sizeof(client_data_t));
+		client->client_fd = client_fd;
+		client->data = data;
 
 		sem_wait(&data->space);
 		pthread_mutex_lock(&data->mutex);
 		data->clientCount++;
 		printf("Klient sa pripojil!\n");
+
 		pthread_mutex_unlock(&data->mutex);
 		sem_post(&data->clients);
-		pthread_t client;
-		pthread_create(&client, NULL, client_message, data);
-		pthread_join(client, NULL);
+
+		pthread_t client_th;
+		pthread_create(&client_th, NULL, client_message, client);
+		pthread_detach(client_th);
+
 	}
 
 	return NULL;
@@ -126,6 +141,8 @@ int main(int argc, char** argv) {
 	}
 	data.clientCount = 0;
 	data.isOff = 0;
+	data.in = 0;
+	data.out = 0;
 	pthread_mutex_init(&data.mutex, NULL);
 	sem_init(&data.space, 0, MAX_CLIENTS);
 	sem_init(&data.clients, 0, 0);
