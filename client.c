@@ -24,11 +24,13 @@ int connected(int port) {
 
 	if (inet_pton(AF_INET, "127.0.0.1", (struct sockaddr*)&server_addr.sin_addr) < 0) {
 		perror("Adresa je neplatna\n");
+		close(client_fd);
 		return 2;
 	}
 
 	if (connect(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
 		perror("Pripojenie k serveru zlyhalo\n");
+		close(client_fd);
 		return 3;
 	}
 
