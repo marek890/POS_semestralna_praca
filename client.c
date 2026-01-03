@@ -24,11 +24,13 @@ int connected(int port) {
 
 	if (inet_pton(AF_INET, "127.0.0.1", (struct sockaddr*)&server_addr.sin_addr) < 0) {
 		perror("Adresa je neplatna\n");
+		close(client_fd);
 		return 2;
 	}
 
 	if (connect(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
 		perror("Pripojenie k serveru zlyhalo\n");
+		close(client_fd);
 		return 3;
 	}
 
@@ -61,8 +63,8 @@ int main(int argc, char** argv) {
 	int gameTime = 0;
 	int x = 0;
 	int y = 0;
+	int port;
 	_Bool isPaused = 0;
-	int port = atoi(argv[1]);
 
 	printf("****Hlavné menu****\n");
 	printf("[1] Nová hra\n");
@@ -97,9 +99,32 @@ int main(int argc, char** argv) {
 	
 		printf("Zadaj šírku herného sveta\n");
 		scanf("%d", &x);
+
+		printf("Zadaj port\n");
+		scanf("%d", &port);
+		char portStr[6];
+		snprintf(portStr, sizeof(portStr), "%d", port);
+
+		pid_t pid = fork();
+		if (pid < 0) {
+			perror("Fork zlyhal\n");
+			exit(1);
+		}
+
+		if (pid == 0) {
+			execl("./server", "./server", portStr, NULL);
+		}
+		else {
+			sleep(1);
+			return connected(port);
+		}
+
+
 	}
 
 	if (menuChoice == 2) {
+		printf("Zadaj port\n");
+		scanf("%d", &port);
 		return connected(port);
 	}
 	
