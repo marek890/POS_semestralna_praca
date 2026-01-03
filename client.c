@@ -33,7 +33,6 @@ int connected(int port) {
 	}
 
 	while (1) {
-		
 		send(client_fd, buffer, strlen(buffer), 0);
 
 		if (strncmp(buffer, "q", 1) == 0) {
@@ -96,7 +95,7 @@ int main(int argc, char** argv) {
 	}
 
 	if (menuChoice == 2) {
-		connected(port);
+		return connected(port);
 	}
 	
 	return 0;
