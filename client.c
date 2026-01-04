@@ -40,7 +40,12 @@ int connected(int port) {
 		close(client_fd);
 		return 3;
 	}
-	//initscr();
+	initscr();
+	cbreak();
+	noecho();
+	keypad(stdscr, TRUE);
+	nodelay(stdscr, TRUE);
+
 	while (1) {
 /*
 		if (fgets(buffer, BUFFER_SIZE, stdin) == NULL) 
@@ -62,7 +67,7 @@ int connected(int port) {
 		}
 
 	}
-	//endwin();
+	endwin();
 	close(client_fd);
 	return 0;
 
