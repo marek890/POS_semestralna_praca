@@ -27,6 +27,7 @@ typedef struct {
 typedef struct {
 	int client_fd;
 	data_t* data;
+	int id;
 } client_data_t;
 
 void* client_message(void* arg) {
@@ -42,15 +43,17 @@ void* client_message(void* arg) {
 		
 		pthread_mutex_lock(&data->mutex);
 		switch (ch) {
-			case 'w': game->snakes[0].dir = UP; break;			
-			case 's': game->snakes[0].dir = DOWN; break;			
-			case 'a': game->snakes[0].dir = LEFT; break;			
-			case 'd': game->snakes[0].dir = RIGHT; break;
+			case 'w': game->snakes[client->id].dir = UP; break;			
+			case 's': game->snakes[client->id].dir = DOWN; break;			
+			case 'a': game->snakes[client->id].dir = LEFT; break;			
+			case 'd': game->snakes[client->id].dir = RIGHT; break;
 		}
 		pthread_mutex_unlock(&data->mutex);
 	}
 	pthread_mutex_lock(&data->mutex);	
 	data->clientCount--;
+	data->game.snakes[client->id].alive = 0;
+	data->game.playerCount--;
 	sem_post(&data->space);
 	pthread_mutex_unlock(&data->mutex);
 	close(client->client_fd);
@@ -60,6 +63,7 @@ void* client_message(void* arg) {
 
 void* accept_clients(void* arg) {
 	data_t* data = (data_t*)arg;
+	int id = 0;
 
 	while (1) {
 		pthread_mutex_lock(&data->mutex);
@@ -75,9 +79,21 @@ void* accept_clients(void* arg) {
 		client_data_t* client = malloc(sizeof(client_data_t));
 		client->client_fd = client_fd;
 		client->data = data;
+		client->id = id;
+		id = (id + 1) % MAX_CLIENTS;
 
 		sem_wait(&data->space);
 		pthread_mutex_lock(&data->mutex);
+
+		int add = add_snake(&data->game);
+		if (add < 0)
+		{
+			pthread_mutex_unlock(&data->mutex);
+			close(client_fd);
+			free(client);
+			continue;
+		}
+		
 		data->clients[data->clientCount] = client_fd;
 		data->clientCount++;
 		//printf("Klient sa pripojil!\n");
