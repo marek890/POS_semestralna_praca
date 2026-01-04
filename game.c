@@ -3,15 +3,7 @@
 void init_game(game_t* game, int width, int length) {
 	game->length = length;
 	game->width = width;
-	game->playerCount = 1;
-
-	snake_t* snake = &game->snakes[0];
-	snake->length = 1;
-	snake->dir = RIGHT;
-	snake->alive = 1;
-
-	snake->body[0].x = width / 2;
-	snake->body[0].y = length / 2;
+	game->playerCount = 0;
 
 	for (int i = 0; i < MAX_PLAYERS; i++)
 		game->fruits[i].active = 0;
