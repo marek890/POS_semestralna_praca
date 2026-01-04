@@ -30,10 +30,26 @@ void* client_input(void* arg) {
 	data_t* data = (data_t*)arg;
 
 	while (1) {
-		char ch = getch();
-		if (ch != ERR) {
-			send(data->client_fd, &ch, 1, 0);
+		int ch = getch();
+		if (ch != ERR) continue;
+
+		char out;
+		switch (ch) {
+			case KEY_UP:	out = 'w'; break;
+			case KEY_DOWN:	out = 's'; break;
+			case KEY_LEFT:	out = 'a'; break;
+			case KEY_RIGHT:	out = 'd'; break;
+			case 'w':
+			case 'a':
+			case 's':
+			case 'd':
+				out = ch;
+				break;
+			default:
+				continue;
+
 		}
+		send(data->client_fd, &out, 1, 0);
 	}
 
 	return NULL;
@@ -49,7 +65,7 @@ void* client_render(void* arg) {
 		if (r <= 0) break;
 
 		pthread_mutex_lock(&data->mutex);
-		clear();
+		erase();
 		snake_t* snake = &game.snakes[0];
 		for (int i = 0; i < snake->length; i++) {
 			if (snake->body[i].x >= 0 && snake->body[i].x < 100 &&
