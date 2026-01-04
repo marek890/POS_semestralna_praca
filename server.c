@@ -187,7 +187,7 @@ int main(int argc, char** argv) {
 	pthread_t accept_th, shutdown_th, game_th;
 	pthread_create(&accept_th, NULL, accept_clients, &data);
 	pthread_create(&shutdown_th, NULL, server_shutdown, &data);
-	pthread_create(&game_th, NULL, game_loop, &data.game);
+	pthread_create(&game_th, NULL, game_loop, &data);
 
 	pthread_join(accept_th, NULL);
 	pthread_join(shutdown_th, NULL);
