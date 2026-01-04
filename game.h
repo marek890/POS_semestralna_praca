@@ -22,7 +22,6 @@ typedef struct {
 
 typedef struct {
 	position_t pos;
-	_Bool active;
 } fruit_t;
 
 typedef struct {
