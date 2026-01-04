@@ -127,9 +127,9 @@ void* game_loop(void* arg) {
 	
 	while (1) {
 		usleep(50000);
-		update_game(&data->game);
 
 		pthread_mutex_lock(&data->mutex);
+		update_game(&data->game);
 		for (int i = 0; i < data->clientCount; i++) {
 			send(data->clients[i], &data->game, sizeof(game_t), 0);
 		}
