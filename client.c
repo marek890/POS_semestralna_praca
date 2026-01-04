@@ -35,14 +35,14 @@ void* client_render(void* arg) {
 	game_t game;
 
 	while (1) {
-		int r = recv(fd, &game, sizeof(game_t), 0);
+		int r = recv(client_fd, &game, sizeof(game_t), 0);
 		if (r <= 0) break;
 
 		clear();
 
 		snake_t* snake = &game.snakes[0];
 		for (int i = 0; i < snake->length; i++) {
-			mvaddch(s->body[i].y,  s->body[i].x, 'O');
+			mvaddch(snake->body[i].y,  snake->body[i].x, 'O');
 		}
 
 		refresh();
