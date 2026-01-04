@@ -108,8 +108,8 @@ int main(int argc, char** argv) {
 	int regimeChoice = -1;
 	int worldChoice = -1;
 	int gameTime = 0;
-	char* x;
-	char* y;
+	int x = 0;
+	int y = 0;
 	int port;
 	_Bool isPaused = 0;
 
@@ -142,15 +142,21 @@ int main(int argc, char** argv) {
 		scanf("%d", &worldChoice);
 
 		printf("Zadaj výšku herného sveta\n");
-		scanf("%s", &y);
+		scanf("%d", &y);
 	
 		printf("Zadaj šírku herného sveta\n");
-		scanf("%s", &x);
+		scanf("%d", &x);
 
 		printf("Zadaj port\n");
 		scanf("%d", &port);
+
 		char portStr[6];
+		char xStr[5];
+		char yStr[5];
+
 		snprintf(portStr, sizeof(portStr), "%d", port);
+		snprintf(xStr, sizeof(xStr), "%d", x);
+		snprintf(yStr, sizeof(yStr), "%d", y);
 
 		pid_t pid = fork();
 		if (pid < 0) {
