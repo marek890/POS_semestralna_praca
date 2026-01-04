@@ -39,13 +39,15 @@ void* client_message(void* arg) {
 		int read = recv(client->client_fd, &ch, 1, 0);
 		if (read <= 0)
 			break;
-
+		
+		pthread_mutex_lock(&data->mutex);
 		switch (ch) {
 			case 'w': game->snakes[0].dir = UP; break;			
 			case 's': game->snakes[0].dir = DOWN; break;			
 			case 'a': game->snakes[0].dir = LEFT; break;			
 			case 'd': game->snakes[0].dir = RIGHT; break;
 		}
+		pthread_mutex_unlock(&data->mutex);
 	}
 	pthread_mutex_lock(&data->mutex);	
 	data->clientCount--;
