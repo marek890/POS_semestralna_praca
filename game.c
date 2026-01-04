@@ -23,6 +23,16 @@ void update_game(game_t* game) {
 		if (!snake->alive) continue;
 
 		move_snake(snake);
+		
+		if (snake->body[0].x < 0)
+			snake->body[0].x = game->width - 1;
+		else if (snake->body[0].x >= game->width)
+			snake->body[0].x = 0;
+
+		if (snake->body[0].y < 0)
+			snake->body[0].y = game->length - 1;
+		else if (snake->body[0].y >= game->length)
+			snake->body[0].y = 0;
 
 	/*	for (int j = 0; j < game->playerCount; j++) {
 			fruit_t* fruit = &game->fruits[j];
