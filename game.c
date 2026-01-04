@@ -34,18 +34,21 @@ void update_game(game_t* game) {
 		else if (snake->body[0].y >= game->length)
 			snake->body[0].y = 0;
 
-	/*	for (int j = 0; j < game->playerCount; j++) {
+		for (int j = 0; j < game->playerCount; j++) {
 			fruit_t* fruit = &game->fruits[j];
 			if (!fruit->active) continue;
 
 			if (snake->body[0].x == fruit->pos.x &&
 				snake->body[0].y == fruit->pos.y) {
 				
-				snake->length++;
+				if (snake->length < MAX_SNAKE_LENGTH)
+					snake->length++;
+				
 				fruit->pos.x = rand() % game->width;
 				fruit->pos.y = rand() % game->length;
+				fruit->active = 1;
 			}
-		}*/
+		}
 	}
 }
 
