@@ -70,7 +70,7 @@ void* client_render(void* arg) {
 		pthread_mutex_lock(&data->mutex);
 		erase();
 		
-		for (int i = 0; < game.playerCount; i++) {
+		for (int i = 0; i < game.playerCount; i++) {
 			snake_t* snake = &game.snakes[i];
 			for (int j = 0; j < snake->length; j++) {
 				if (snake->body[j].x >= 0 && snake->body[j].x < game.width &&
