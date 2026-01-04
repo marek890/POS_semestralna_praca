@@ -17,6 +17,7 @@ typedef struct {
 	int in, out;
 	int server_fd;
 	_Bool isOff;
+	game_t game;
 	sem_t space;
 	sem_t clients;
 	pthread_mutex_t mutex;
@@ -30,16 +31,20 @@ typedef struct {
 void* client_message(void* arg) {
 	client_data_t* client = (client_data_t*)arg;
 	data_t* data = client->data;
+	game_t* game = data->game;
 	char ch;
 
 	while (1) {
 		int read = recv(client->client_fd, &ch, 1, 0);
-		if (read <= 0) {
-			printf("Klient sa odpojil\n");
+		if (read <= 0)
 			break;
-		}
-		fflush(stdout);
 
+		switch (ch) {
+			case 'w': game->snakes[0].dir = UP; break;			
+			case 's': game->snakes[0].dir = DOWN; break;			
+			case 'a': game->snakes[0].dir = LEFT; break;			
+			case 'd': game->snakes[0].dir = RIGHT; break;
+		}
 	}
 	pthread_mutex_lock(&data->mutex);	
 	data->clientCount--;
@@ -165,17 +170,16 @@ int main(int argc, char** argv) {
 	data.isOff = 0;
 	data.in = 0;
 	data.out = 0;
+	init_game(&data.game);
 	pthread_mutex_init(&data.mutex, NULL);
 	sem_init(&data.space, 0, MAX_CLIENTS);
 	sem_init(&data.clients, 0, 0);
 
-	game_t game;
-	game_init(&game);
 
 	pthread_t accept_th, shutdown_th;
 	pthread_create(&accept_th, NULL, accept_clients, &data);
 	pthread_create(&shutdown_th, NULL, server_shutdown, &data);
-	pthread_create(&game_th, NULL, game_loop, &game);
+	pthread_create(&game_th, NULL, game_loop, &data.game);
 
 	pthread_join(accept_th, NULL);
 	pthread_join(shutdown_th, NULL);
