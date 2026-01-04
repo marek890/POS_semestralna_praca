@@ -12,6 +12,9 @@ void init_game(game_t* game, int width, int length) {
 
 	snake->body[0].x = width / 2;
 	snake->body[0].y = length / 2;
+
+	for (int i = 0; i < MAX_PLAYERS; i++)
+		game->fruits[i].active = 0;
 }
 
 void update_game(game_t* game) {
@@ -21,7 +24,7 @@ void update_game(game_t* game) {
 
 		move_snake(snake);
 
-		for (int j = 0; i < game->playerCount; j++) {
+		for (int j = 0; j < game->playerCount; j++) {
 			fruit_t* fruit = &game->fruits[j];
 			if (!fruit->active) continue;
 
