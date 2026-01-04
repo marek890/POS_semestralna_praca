@@ -47,25 +47,10 @@ int connected(int port) {
 	nodelay(stdscr, TRUE);
 
 	while (1) {
-/*
-		if (fgets(buffer, BUFFER_SIZE, stdin) == NULL) 
-			break;
-		
-
-		send(client_fd, buffer, strlen(buffer), 0);
-
-		if (strncmp(buffer, "q", 1) == 0) {
-			printf("Klient ukončuje spojenie\n");
-			break;
-		}
-
-		memset(buffer, 0, BUFFER_SIZE);
-		*/
 		char ch = getch();
 		if (ch != ERR) {
 			send(client_fd, &ch, 1, 0);
 		}
-
 	}
 	endwin();
 	close(client_fd);
