@@ -16,6 +16,16 @@ typedef struct {
 	pthread_mutex_t mutex;
 } data_t;
 
+ssize_t recv_all(int fd, void* buffer, size_t size) {
+	size_t received = 0;
+	while (received < size) {
+		ssize_t r = recv(fd, (char*)buffer + received, size - received, 0);
+		if (r <= 0) return r;
+		received += r;
+	}
+	return received;
+}
+
 void* client_input(void* arg) {	
 	data_t* data = (data_t*)arg;
 
@@ -35,7 +45,7 @@ void* client_render(void* arg) {
 	memset(&game, 0, sizeof(game));
 
 	while (1) {
-		int r = recv(data->client_fd, &game, sizeof(game_t), 0);
+		int r = recv_all(data->client_fd, &game, sizeof(game_t));
 		if (r <= 0) break;
 
 		pthread_mutex_lock(&data->mutex);
