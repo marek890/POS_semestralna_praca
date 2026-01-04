@@ -42,7 +42,10 @@ void* client_render(void* arg) {
 		clear();
 		snake_t* snake = &game.snakes[0];
 		for (int i = 0; i < snake->length; i++) {
-			mvaddch(snake->body[i].y,  snake->body[i].x, 'O');
+			if (snake->body[i].x >= 0 && snake->body[i].x < 100 &&
+				snake->body[i].y >= 0 && snake->body[i].y < 100) {
+					mvaddch(snake->body[i].y,  snake->body[i].x, 'O');
+			}
 		}
 		refresh();
 		pthread_mutex_unlock(&data->mutex);
