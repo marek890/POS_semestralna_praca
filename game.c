@@ -24,7 +24,7 @@ void update_game(game_t* game) {
 
 		move_snake(snake);
 
-		for (int j = 0; j < game->playerCount; j++) {
+	/*	for (int j = 0; j < game->playerCount; j++) {
 			fruit_t* fruit = &game->fruits[j];
 			if (!fruit->active) continue;
 
@@ -35,7 +35,7 @@ void update_game(game_t* game) {
 				fruit->pos.x = rand() % game->width;
 				fruit->pos.y = rand() % game->length;
 			}
-		}
+		}*/
 	}
 }
 
