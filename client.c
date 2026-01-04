@@ -5,8 +5,15 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <unistd.h>
+#include <ncurses.h>
 
 #define BUFFER_SIZE 1024
+
+void draw_world() {
+	clear();
+	
+	refresh();
+}
 
 int connected(int port) {
 	char buffer[BUFFER_SIZE];
@@ -33,23 +40,19 @@ int connected(int port) {
 		close(client_fd);
 		return 3;
 	}
+	initscr();
+	cbreak();
+	noecho();
+	keypad(stdscr, TRUE);
+	nodelay(stdscr, TRUE);
 
 	while (1) {
-
-		if (fgets(buffer, BUFFER_SIZE, stdin) == NULL) 
-			break;
-		
-
-		send(client_fd, buffer, strlen(buffer), 0);
-
-		if (strncmp(buffer, "q", 1) == 0) {
-			printf("Klient ukončuje spojenie\n");
-			break;
+		char ch = getch();
+		if (ch != ERR) {
+			send(client_fd, &ch, 1, 0);
 		}
-
-		memset(buffer, 0, BUFFER_SIZE);
-		
 	}
+	endwin();
 	close(client_fd);
 	return 0;
 
