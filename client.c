@@ -15,6 +15,26 @@ void draw_world() {
 	refresh();
 }
 
+void* client_input(void* arg) {	
+	int client_fd = *(int*)arg;
+
+	while (1) {
+		char ch = getch();
+		if (ch != ERR) {
+			send(client_fd, &ch, 1, 0);
+		}
+	}
+
+	return NULL;
+}
+
+void* client_render(void* arg) {
+	int client_fd = *(int*)arg;
+
+
+	return NULL;
+}
+
 int connected(int port) {
 	char buffer[BUFFER_SIZE];
 	int client_fd;
@@ -39,19 +59,21 @@ int connected(int port) {
 		perror("Pripojenie k serveru zlyhalo\n");
 		close(client_fd);
 		return 3;
-	}
+	}	
+
 	initscr();
 	cbreak();
 	noecho();
 	keypad(stdscr, TRUE);
 	nodelay(stdscr, TRUE);
 
-	while (1) {
-		char ch = getch();
-		if (ch != ERR) {
-			send(client_fd, &ch, 1, 0);
-		}
-	}
+	pthread_t input_th, render_th;
+	pthread_create(&input_th, NULL, client_input, &client_fd);
+	pthread_create(&render_th, NULL, client_render, &client_fd);
+
+	pthread_join(input_th, NULL);
+	pthread_join(render_th, NULL);
+
 	endwin();
 	close(client_fd);
 	return 0;
