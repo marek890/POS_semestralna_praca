@@ -80,7 +80,7 @@ void* accept_clients(void* arg) {
 		pthread_mutex_lock(&data->mutex);
 		data->clients[data->clientCount] = client_fd;
 		data->clientCount++;
-		printf("Klient sa pripojil!\n");
+		//printf("Klient sa pripojil!\n");
 
 		pthread_mutex_unlock(&data->mutex);
 		sem_post(&data->clientsSem);
@@ -103,7 +103,7 @@ void* server_shutdown(void* arg) {
 		pthread_mutex_unlock(&data->mutex);
 
 		if (count == 0) {
-			printf("Server sa vypne za %d sekúnd.\n", countdown);
+			//printf("Server sa vypne za %d sekúnd.\n", countdown);
 			sleep(1);
 			countdown--;
 
@@ -117,7 +117,7 @@ void* server_shutdown(void* arg) {
 		else
 			countdown = 10;
 	}
-	printf("Server je vypnutý!\n");
+	//printf("Server je vypnutý!\n");
 
 	return NULL;
 }
