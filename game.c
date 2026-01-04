@@ -1,13 +1,17 @@
 #include "game.h"
 
 void init_game(game_t* game, int width, int length) {
-	game.length = length;
-	game.width = width;
-	game.playerCount = 1;
+	game->length = length;
+	game->width = width;
+	game->playerCount = 1;
 
-	game.snakes[0].pos.x = width / 2;
-	game.snakes[0].pos.y = length / 2;
-	game.snakes[0].length = 1;
+	snake_t* snake = &game->snakes[0];
+	snake->length = 1;
+	snake->dir = RIGHT;
+	snake->alive = 1;
+
+	snake->body[0].x = width / 2;
+	snake->body[0].y = length / 2;
 }
 
 void update_game(game_t* game) {
@@ -21,8 +25,8 @@ void update_game(game_t* game) {
 			fruit_t* fruit = &game->fruits[j];
 			if (!fruit->active) continue;
 
-			if (snake->body[0].x = fruit->pos.x &&
-				snake->body[0].y = fruit->pos.y) {
+			if (snake->body[0].x == fruit->pos.x &&
+				snake->body[0].y == fruit->pos.y) {
 				
 				snake->length++;
 				fruit->pos.x = rand() % game->width;
