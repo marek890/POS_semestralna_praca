@@ -32,27 +32,12 @@ void* client_message(void* arg) {
 	char ch;
 
 	while (1) {
-	/*	memset(buffer, 0, BUFFER_SIZE);
-
-		int read = recv(client->client_fd, buffer, BUFFER_SIZE - 1, 0);
-		if (read <= 0) {
-			printf("Klient sa odpojil!\n");
-			break;
-		}
-		
-		printf("Prijata sprava: %s\n", buffer);
-
-		if (strncmp(buffer, "q", 1) == 0 ) {
-			printf("Ukončujem spojenie\n");
-			break;
-		}*/
-
 		int read = recv(client->client_fd, &ch, 1, 0);
 		if (read <= 0) {
 			printf("Klient sa odpojil\n");
 			break;
 		}
-		printf("Prijata sprava: %c\n", ch);
+		fflush(stdout);
 
 	}
 	pthread_mutex_lock(&data->mutex);	
