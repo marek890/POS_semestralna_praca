@@ -11,19 +11,18 @@
 
 #define BUFFER_SIZE 1024
 
-void draw_world() {
-	clear();
-	
-	refresh();
-}
+typedef struct {
+	int client_fd;
+	pthread_mutex_t mutex;
+} data_t;
 
 void* client_input(void* arg) {	
-	int client_fd = *(int*)arg;
+	data_t* data = (data_t*)arg;
 
 	while (1) {
 		char ch = getch();
 		if (ch != ERR) {
-			send(client_fd, &ch, 1, 0);
+			send(data->client_fd, &ch, 1, 0);
 		}
 	}
 
@@ -31,21 +30,22 @@ void* client_input(void* arg) {
 }
 
 void* client_render(void* arg) {
-	int client_fd = *(int*)arg;
+	data_t* data = (data_t*)arg;
 	game_t game;
+	memset(&game, 0, sizeof(game));
 
 	while (1) {
-		int r = recv(client_fd, &game, sizeof(game_t), 0);
+		int r = recv(data->client_fd, &game, sizeof(game_t), 0);
 		if (r <= 0) break;
 
+		pthread_mutex_lock(&data->mutex);
 		clear();
-
 		snake_t* snake = &game.snakes[0];
 		for (int i = 0; i < snake->length; i++) {
 			mvaddch(snake->body[i].y,  snake->body[i].x, 'O');
 		}
-
 		refresh();
+		pthread_mutex_unlock(&data->mutex);
 	}
 
 	return NULL;
@@ -53,10 +53,10 @@ void* client_render(void* arg) {
 
 int connected(int port) {
 	char buffer[BUFFER_SIZE];
-	int client_fd;
-	client_fd = socket(AF_INET, SOCK_STREAM, 0);
+	data_t data;
+	data.client_fd = socket(AF_INET, SOCK_STREAM, 0);
 	
-	if (client_fd < 0) {
+	if (data.client_fd < 0) {
 		perror("Vytvorenie socketu zlyhalo\n");
 		return 1;
 	}
@@ -67,13 +67,13 @@ int connected(int port) {
 
 	if (inet_pton(AF_INET, "127.0.0.1", (struct sockaddr*)&server_addr.sin_addr) < 0) {
 		perror("Adresa je neplatna\n");
-		close(client_fd);
+		close(data.client_fd);
 		return 2;
 	}
 
-	if (connect(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
+	if (connect(data.client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
 		perror("Pripojenie k serveru zlyhalo\n");
-		close(client_fd);
+		close(data.client_fd);
 		return 3;
 	}	
 
@@ -83,15 +83,18 @@ int connected(int port) {
 	keypad(stdscr, TRUE);
 	nodelay(stdscr, TRUE);
 
+	
+	pthread_mutex_init(&data.mutex, NULL);
 	pthread_t input_th, render_th;
-	pthread_create(&input_th, NULL, client_input, &client_fd);
-	pthread_create(&render_th, NULL, client_render, &client_fd);
+	pthread_create(&input_th, NULL, client_input, &data);
+	pthread_create(&render_th, NULL, client_render, &data);
 
 	pthread_join(input_th, NULL);
 	pthread_join(render_th, NULL);
 
+	pthread_mutex_destroy(&data.mutex);
 	endwin();
-	close(client_fd);
+	close(data.client_fd);
 	return 0;
 
 }
