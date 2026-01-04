@@ -126,7 +126,7 @@ void* game_loop(void* arg) {
 	data_t* data = (data_t*)arg;
 	
 	while (1) {
-		usleep(200000);
+		usleep(50000);
 		update_game(&data->game);
 
 		pthread_mutex_lock(&data->mutex);
