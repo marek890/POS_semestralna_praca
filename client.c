@@ -31,7 +31,7 @@ void* client_input(void* arg) {
 
 	while (1) {
 		int ch = getch();
-		if (ch != ERR) continue;
+		if (ch == ERR) continue;
 
 		char out;
 		switch (ch) {
