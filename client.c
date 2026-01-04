@@ -66,7 +66,7 @@ void* client_render(void* arg) {
 	while (1) {
 		int r = recv_all(data->client_fd, &game, sizeof(game_t));
 		if (r <= 0) break;
-
+		usleep(50000);
 		pthread_mutex_lock(&data->mutex);
 		erase();
 		
