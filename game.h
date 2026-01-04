@@ -16,10 +16,12 @@ typedef struct {
 	position_t body[100]; 
 	direction_t dir;
 	int length;
+	_Bool alive;
 } snake_t;
 
 typedef struct {
 	position_t pos;
+	_Bool active;
 } fruit_t;
 
 typedef struct {
@@ -31,5 +33,5 @@ typedef struct {
 
 void init_game(game_t* game, int width, int length);
 void update_game(game_t* game);
-void move_snake(game_t* game, int player, char dir);
+void move_snake(snake_t* snake);
 
