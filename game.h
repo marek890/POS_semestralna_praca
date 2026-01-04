@@ -3,15 +3,19 @@
 
 #define MAX_PLAYERS 5
 
+typedef enum {
+	UP, DOWN, LEFT, RIGHT
+} direction_t;
+
 typedef struct {
 	int x;
 	int y;
 } position_t;
 
 typedef struct {
-	position_t pos; 
+	position_t body[100]; 
+	direction_t dir;
 	int length;
-	int score;
 } snake_t;
 
 typedef struct {
@@ -25,5 +29,7 @@ typedef struct {
 	int width, length;
 } game_t;
 
-void init_game(int width, int length);
+void init_game(game_t* game, int width, int length);
+void update_game(game_t* game);
+void move_snake(game_t* game, int player, char dir);
 
