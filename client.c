@@ -32,7 +32,7 @@ void* client_input(void* arg) {
 	while (1) {
 		int ch = getch();
 		if (ch == ERR) {
-			usleep(1000);
+			usleep(5000);
 			continue;
 		}
 
