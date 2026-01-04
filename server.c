@@ -16,10 +16,11 @@ typedef struct {
 	int clientCount;
 	int in, out;
 	int server_fd;
+	int clients[MAX_CLIENTS];
 	_Bool isOff;
 	game_t game;
 	sem_t space;
-	sem_t clients;
+	sem_t clientsSem;
 	pthread_mutex_t mutex;
 } data_t;
 
@@ -75,11 +76,12 @@ void* accept_clients(void* arg) {
 
 		sem_wait(&data->space);
 		pthread_mutex_lock(&data->mutex);
+		data->clients[data->clientCount] = client_fd;
 		data->clientCount++;
 		printf("Klient sa pripojil!\n");
 
 		pthread_mutex_unlock(&data->mutex);
-		sem_post(&data->clients);
+		sem_post(&data->clientsSem);
 
 		pthread_t client_th;
 		pthread_create(&client_th, NULL, client_message, client);
@@ -119,11 +121,17 @@ void* server_shutdown(void* arg) {
 }
 
 void* game_loop(void* arg) {
-	game_t* game = (game_t*)arg;
+	data_t* data = (data_t*)arg;
 	
 	while (1) {
 		usleep(200000);
-		update_game(game);
+		update_game(&data->game);
+
+		pthread_mutex_lock(&data->mutex);
+		for (int i = 0; i < data->clientCount; i++) {
+			send(data->clients[i], &data->game, sizeof(game_t), 0);
+		}
+		pthread_mutex_unlock(&data->mutex);
 	}
 
 	return NULL;
@@ -173,7 +181,7 @@ int main(int argc, char** argv) {
 	init_game(&data.game, 60, 30);
 	pthread_mutex_init(&data.mutex, NULL);
 	sem_init(&data.space, 0, MAX_CLIENTS);
-	sem_init(&data.clients, 0, 0);
+	sem_init(&data.clientsSem, 0, 0);
 
 
 	pthread_t accept_th, shutdown_th;
@@ -187,6 +195,6 @@ int main(int argc, char** argv) {
 
 	pthread_mutex_destroy(&data.mutex);
 	sem_destroy(&data.space);
-	sem_destroy(&data.clients);
+	sem_destroy(&data.clientsSem);
 	return 0;
 }
