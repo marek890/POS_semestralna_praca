@@ -15,6 +15,8 @@ void init_game(game_t* game, int width, int length) {
 
 	for (int i = 0; i < MAX_PLAYERS; i++)
 		game->fruits[i].active = 0;
+
+	game->fruits[0].active = 1;
 }
 
 void update_game(game_t* game) {
