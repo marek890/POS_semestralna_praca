@@ -82,10 +82,7 @@ void* client_render(void* arg) {
 
 		for (int i = 0; i < game.playerCount; i++) {
 			fruit_t* fruit = &game.fruits[i];
-			if (!fruit->active) continue;
-
 			mvaddch(fruit->pos.y, fruit->pos.x, 'F');
-
 		}
 
 		refresh();
