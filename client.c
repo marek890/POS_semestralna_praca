@@ -165,7 +165,7 @@ int main(int argc, char** argv) {
 		}
 
 		if (pid == 0) {
-			execl("./server", "./server", portStr, x, y, NULL);
+			execl("./server", "./server", portStr, xStr, yStr, NULL);
 		}
 		else {
 			sleep(1);
