@@ -5,7 +5,9 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <unistd.h>
+#include <pthread.h>
 #include <ncurses.h>
+#include "game.h"
 
 #define BUFFER_SIZE 1024
 
@@ -13,6 +15,40 @@ void draw_world() {
 	clear();
 	
 	refresh();
+}
+
+void* client_input(void* arg) {	
+	int client_fd = *(int*)arg;
+
+	while (1) {
+		char ch = getch();
+		if (ch != ERR) {
+			send(client_fd, &ch, 1, 0);
+		}
+	}
+
+	return NULL;
+}
+
+void* client_render(void* arg) {
+	int client_fd = *(int*)arg;
+	game_t game;
+
+	while (1) {
+		int r = recv(fd, &game, sizeof(game_t), 0);
+		if (r <= 0) break;
+
+		clear();
+
+		snake_t* snake = &game.snakes[0];
+		for (int i = 0; i < snake->length; i++) {
+			mvaddch(s->body[i].y,  s->body[i].x, 'O');
+		}
+
+		refresh();
+	}
+
+	return NULL;
 }
 
 int connected(int port) {
@@ -39,19 +75,21 @@ int connected(int port) {
 		perror("Pripojenie k serveru zlyhalo\n");
 		close(client_fd);
 		return 3;
-	}
+	}	
+
 	initscr();
 	cbreak();
 	noecho();
 	keypad(stdscr, TRUE);
 	nodelay(stdscr, TRUE);
 
-	while (1) {
-		char ch = getch();
-		if (ch != ERR) {
-			send(client_fd, &ch, 1, 0);
-		}
-	}
+	pthread_t input_th, render_th;
+	pthread_create(&input_th, NULL, client_input, &client_fd);
+	pthread_create(&render_th, NULL, client_render, &client_fd);
+
+	pthread_join(input_th, NULL);
+	pthread_join(render_th, NULL);
+
 	endwin();
 	close(client_fd);
 	return 0;
