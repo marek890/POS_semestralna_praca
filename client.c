@@ -30,7 +30,21 @@ void* client_input(void* arg) {
 
 void* client_render(void* arg) {
 	int client_fd = *(int*)arg;
+	game_t game;
 
+	while (1) {
+		int r = recv(fd, &game, sizeof(game_t), 0);
+		if (r <= 0) break;
+
+		clear();
+
+		snake_t* snake = &game.snakes[0];
+		for (int i = 0; i < snake->length; i++) {
+			mvaddch(s->body[i].y,  s->body[i].x, 'O');
+		}
+
+		refresh();
+	}
 
 	return NULL;
 }
