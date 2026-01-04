@@ -29,10 +29,10 @@ typedef struct {
 void* client_message(void* arg) {
 	client_data_t* client = (client_data_t*)arg;
 	data_t* data = client->data;
-	char buffer[BUFFER_SIZE];
+	char ch;
 
 	while (1) {
-		memset(buffer, 0, BUFFER_SIZE);
+	/*	memset(buffer, 0, BUFFER_SIZE);
 
 		int read = recv(client->client_fd, buffer, BUFFER_SIZE - 1, 0);
 		if (read <= 0) {
@@ -45,7 +45,14 @@ void* client_message(void* arg) {
 		if (strncmp(buffer, "q", 1) == 0 ) {
 			printf("Ukončujem spojenie\n");
 			break;
+		}*/
+
+		int read = recv(client->client_fd, &ch, 1, 0);
+		if (read <= 0) {
+			printf("Klient sa odpojil\n");
+			break;
 		}
+		printf("Prijata sprava: %c\n", ch);
 
 	}
 	pthread_mutex_lock(&data->mutex);	
