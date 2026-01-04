@@ -15,7 +15,7 @@ void init_game(game_t* game, int width, int length) {
 }
 
 void update_game(game_t* game) {
-	for (int i = 0; i < game->playerCount; ++) {
+	for (int i = 0; i < game->playerCount; i++) {
 		snake_t* snake = &game->snakes[i];
 		if (!snake->alive) continue;
 
