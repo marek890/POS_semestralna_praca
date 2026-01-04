@@ -67,3 +67,21 @@ void move_snake(snake_t* snake) {
 		case RIGHT:	snake->body[0].x++; break;
 	}
 }
+
+int add_snake(game_t* game) {
+	if (game->playerCount >= MAX_PLAYERS)
+		return -1;
+
+	int index = game->playerCount;
+	snake_t* snake = &game->snakes[index];
+
+	snake->length = 1;
+	snake->dir = RIGHT;
+	snake->alive = 1;
+	snake->body[0].x = game->width / 2;
+	snake->body[0].y = game->length / 2;
+
+	game->playerCount++;
+
+	return index;
+}

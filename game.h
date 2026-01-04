@@ -35,4 +35,5 @@ typedef struct {
 void init_game(game_t* game, int width, int length);
 void update_game(game_t* game);
 void move_snake(snake_t* snake);
+int add_snake(game_t* game);
 
