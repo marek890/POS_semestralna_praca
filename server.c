@@ -180,7 +180,7 @@ int main(int argc, char** argv) {
 	data.isOff = 0;
 	data.in = 0;
 	data.out = 0;
-	init_game(&data.game, atoi(argv[2], atoi(argv[3]));
+	init_game(&data.game, atoi(argv[2]), atoi(argv[3]));
 	pthread_mutex_init(&data.mutex, NULL);
 	sem_init(&data.space, 0, MAX_CLIENTS);
 	sem_init(&data.clientsSem, 0, 0);
