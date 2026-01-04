@@ -17,6 +17,8 @@ void init_game(game_t* game, int width, int length) {
 		game->fruits[i].active = 0;
 
 	game->fruits[0].active = 1;
+	game->fruits[0].pos.x = rand() % width;
+	game->fruits[0].pos.y = rand() % length;
 }
 
 void update_game(game_t* game) {
@@ -36,7 +38,7 @@ void update_game(game_t* game) {
 		else if (snake->body[0].y >= game->length)
 			snake->body[0].y = 0;
 
-		for (int j = 0; j < game->playerCount; j++) {
+		for (int j = 0; j < MAX_PLAYERS; j++) {
 			fruit_t* fruit = &game->fruits[j];
 			if (!fruit->active) continue;
 
