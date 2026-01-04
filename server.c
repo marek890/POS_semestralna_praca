@@ -184,7 +184,7 @@ int main(int argc, char** argv) {
 	sem_init(&data.clientsSem, 0, 0);
 
 
-	pthread_t accept_th, shutdown_th;
+	pthread_t accept_th, shutdown_th, game_th;
 	pthread_create(&accept_th, NULL, accept_clients, &data);
 	pthread_create(&shutdown_th, NULL, server_shutdown, &data);
 	pthread_create(&game_th, NULL, game_loop, &data.game);
