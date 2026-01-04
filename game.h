@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #define MAX_PLAYERS 5
+#define MAX_SNAKE_LENGTH 100
 
 typedef enum {
 	UP, DOWN, LEFT, RIGHT
@@ -13,7 +14,7 @@ typedef struct {
 } position_t;
 
 typedef struct {
-	position_t body[100]; 
+	position_t body[MAX_SNAKE_LENGTH]; 
 	direction_t dir;
 	int length;
 	_Bool alive;
