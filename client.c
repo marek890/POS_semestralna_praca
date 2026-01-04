@@ -5,7 +5,9 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <unistd.h>
+#include <pthread.h>
 #include <ncurses.h>
+#include "game.h"
 
 #define BUFFER_SIZE 1024
 
