@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <semaphore.h>
 #include <fcntl.h>
+#include "game.h"
 
 #define MAX_CLIENTS 5
 #define BUFFER_SIZE 1024
@@ -112,6 +113,17 @@ void* server_shutdown(void* arg) {
 	return NULL;
 }
 
+void* game_loop(void* arg) {
+	game_t* game = (game_t*)arg;
+	
+	while (1) {
+		usleep(200000);
+		update_game(game);
+	}
+
+	return NULL;
+}
+
 int main(int argc, char** argv) {
 	if (argc != 2) {
 		fprintf(stderr, "Nesprávny počet argumentov\n");
@@ -157,12 +169,17 @@ int main(int argc, char** argv) {
 	sem_init(&data.space, 0, MAX_CLIENTS);
 	sem_init(&data.clients, 0, 0);
 
+	game_t game;
+	game_init(&game);
+
 	pthread_t accept_th, shutdown_th;
 	pthread_create(&accept_th, NULL, accept_clients, &data);
 	pthread_create(&shutdown_th, NULL, server_shutdown, &data);
+	pthread_create(&game_th, NULL, game_loop, &game);
 
 	pthread_join(accept_th, NULL);
 	pthread_join(shutdown_th, NULL);
+	pthread_detach(game_th);
 
 	pthread_mutex_destroy(&data.mutex);
 	sem_destroy(&data.space);
