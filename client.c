@@ -31,7 +31,10 @@ void* client_input(void* arg) {
 
 	while (1) {
 		int ch = getch();
-		if (ch == ERR) continue;
+		if (ch == ERR) {
+			usleep(1000);
+			continue;
+		}
 
 		char out;
 		switch (ch) {
