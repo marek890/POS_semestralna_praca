@@ -105,8 +105,8 @@ int main(int argc, char** argv) {
 	int regimeChoice = -1;
 	int worldChoice = -1;
 	int gameTime = 0;
-	int x = 0;
-	int y = 0;
+	char* x;
+	char* y;
 	int port;
 	_Bool isPaused = 0;
 
@@ -139,10 +139,10 @@ int main(int argc, char** argv) {
 		scanf("%d", &worldChoice);
 
 		printf("Zadaj výšku herného sveta\n");
-		scanf("%d", &y);
+		scanf("%s", &y);
 	
 		printf("Zadaj šírku herného sveta\n");
-		scanf("%d", &x);
+		scanf("%s", &x);
 
 		printf("Zadaj port\n");
 		scanf("%d", &port);
@@ -156,7 +156,7 @@ int main(int argc, char** argv) {
 		}
 
 		if (pid == 0) {
-			execl("./server", "./server", portStr, NULL);
+			execl("./server", "./server", portStr, x, y, NULL);
 		}
 		else {
 			sleep(1);
