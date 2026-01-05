@@ -10,23 +10,11 @@
 #include <locale.h>
 #include "game.h"
 
-#define BUFFER_SIZE 1024
-
 typedef struct {
 	int client_fd;
 	_Bool isPaused;
 	pthread_mutex_t mutex;
 } data_t;
-
-ssize_t recv_all(int fd, void* buffer, size_t size) {
-	size_t received = 0;
-	while (received < size) {
-		ssize_t r = recv(fd, (char*)buffer + received, size - received, 0);
-		if (r <= 0) return r;
-		received += r;
-	}
-	return received;
-}
 
 int show_main_menu(data_t* data) {
 	int choice = -1;
@@ -142,8 +130,10 @@ void* client_render(void* arg) {
 			for (int i = 0; i < game.playerCount; i++) {
 				snake_t* snake = &game.snakes[i];
 				int score = snake->length - 1;
-
-				mvprintw(5 + i, posX, "Hrac %d: %d", i + 1, score);
+	
+				attron(COLOR_PAIR(snake->color));
+				mvprintw(5 + i, posX, "Hrac %d: %d", snake->playerID, score);
+				attroff(COLOR_PAIR(snake->color));
 
 				for (int j = 0; j < snake->length; j++) {
 					if (!snake->alive) continue;
@@ -208,8 +198,6 @@ int connected(int port, data_t* data) {
 	init_pair(3, COLOR_BLUE, COLOR_BLACK);
 	init_pair(4, COLOR_YELLOW, COLOR_BLACK);
 	init_pair(5, COLOR_CYAN, COLOR_BLACK);
-
-
 
 	pthread_mutex_init(&data->mutex, NULL);
 	pthread_t input_th, render_th;
