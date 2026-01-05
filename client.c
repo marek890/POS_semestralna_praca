@@ -168,7 +168,8 @@ int connected(int port, data_t* data) {
 		close(data->client_fd);
 		return 3;
 	}	
-
+	
+	setlocale(LC_ALL, "");
 	initscr();
 	cbreak();
 	noecho();
@@ -199,7 +200,7 @@ int connected(int port, data_t* data) {
 			}
 			pthread_mutex_unlock(&data->mutex);
 		}
-		usleep(10000);
+		usleep(50000);
 	}
 
 	pthread_join(input_th, NULL);
