@@ -150,6 +150,8 @@ int check_collision(game_t* game, int index) {
 	for (int i = 0; i < game->playerCount; i++) {
 		if (i == index) continue;
 		snake_t* snakeOther = &game->snakes[i];
+		if (!snakeOther->alive) continue;
+		
 		for (int j = 0; j < snakeOther->length; j++)
 			if (snakeOther->body[j].x == x && snakeOther->body[j].y == y)
 				return 1;
