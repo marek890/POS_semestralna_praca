@@ -20,6 +20,7 @@ typedef struct {
 	int clients[MAX_CLIENTS];
 	_Bool isOff;
 	_Bool gameOver;
+	_Bool isTimed;
 	time_t startTime;
 	int maxGameTime;
 	game_t game;
@@ -154,12 +155,14 @@ void* game_loop(void* arg) {
 		usleep(200000);
 
 		pthread_mutex_lock(&data->mutex);
-
-		time_t now = time(NULL);
-		if (difftime(now, data->startTime) >= data->maxGameTime) {
-			data->gameOver = 1;
-			pthread_mutex_unlock(&data->mutex);
-			break;
+		
+		if (data->isTimed) {
+			time_t now = time(NULL);
+			if (difftime(now, data->startTime) >= data->maxGameTime) {
+				data->gameOver = 1;
+				pthread_mutex_unlock(&data->mutex);
+				break;
+			}
 		}
 
 		update_game(&data->game);
