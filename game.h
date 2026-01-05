@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 
 #define MAX_PLAYERS 5
 #define MAX_SNAKE_LENGTH 100
@@ -37,6 +38,10 @@ typedef struct {
 	int playerCount;
 	int width, length;
 	_Bool hasObstacles;
+	_Bool isTimed
+	time_t startTime;
+	int maxGameTime;
+	int elapsedTime;
 } game_t;
 
 void init_game(game_t* game, _Bool hasObstacles, int width, int length);
