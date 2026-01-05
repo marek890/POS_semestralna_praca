@@ -1,12 +1,28 @@
 #include "game.h"
 
-void init_game(game_t* game, int width, int length) {
+void init_game(game_t* game, _Bool hasObstacles, int width, int length) {
 	game->length = length;
 	game->width = width;
 	game->playerCount = 0;
+	game->hasObstacles = hasObstacles;
+	game->obstacleCount = 0;
 
 	game->fruits[0].pos.x = rand() % width;
 	game->fruits[0].pos.y = rand() % length;
+
+	if (hasObstacles) {
+		for (int i = 0; i < MAX_OBSTACLES; i++) {
+			int x, y; 
+			do {
+				x = rand() % width;
+				y = rand() % length;
+			} while (is_position_occupied(game, x, y));
+
+			game->obstacles[i].pos.x = x;
+			game->obstacles[i].pos.y = y;
+			game->obstacleCount++;
+		}
+	}
 }
 
 void update_game(game_t* game) {
@@ -26,6 +42,11 @@ void update_game(game_t* game) {
 		else if (snake->body[0].y >= game->length)
 			snake->body[0].y = 0;
 
+		if (check_collision(game, i)) {
+			snake->alive = 0;
+			continue;
+		}
+
 		for (int j = 0; j < game->playerCount; j++) {
 			fruit_t* fruit = &game->fruits[j];
 
@@ -34,9 +55,15 @@ void update_game(game_t* game) {
 				
 				if (snake->length < MAX_SNAKE_LENGTH)
 					snake->length++;
+
+				int x, y;
+				do {
+					x =  rand() % game->width;
+					y = rand() % game->length;
+				} while(is_position_occupied(game, x, y));
 				
-				fruit->pos.x = rand() % game->width;
-				fruit->pos.y = rand() % game->length;
+				fruit->pos.x = x;
+				fruit->pos.y = y;
 			}
 		}
 	}
@@ -83,4 +110,45 @@ void set_direction(snake_t* snake, direction_t dir) {
 	}
 
 	snake->dir = dir;
+}
+
+_Bool is_position_occupied(game_t* game, int x, int y) {
+	for (int i = 0; i < game->obstacleCount; i++) {
+		if (game->obstacles[i].pos.x == x && game->obstacles[i].pos.y == y)
+			return 1;
+	}
+	for (int i = 0; i < game->playerCount; i++) {
+		if (game->fruits[i].pos.x == x && game->fruits[i].pos.y == y)
+			return 1;
+	}
+	for (int i = 0; i < game->playerCount; i++) {
+		snake_t* snake = &game->snakes[i];
+		for (int j = 0; j < snake->length; j++)
+			if (snake->body[j].x == x && snake->body[j].y == y)
+				return 1;
+	}
+	return 0;
+}
+
+int check_collision(game_t* game, int index) {
+	snake_t* snake = &game->snakes[index];
+	int x = snake->body[0].x;
+	int y = snake->body[0].y;
+
+	for (int i = 0; i < game->obstacleCount; i++) {
+		if (game->obstacles[i].pos.x == x && game->obstacles[i].pos.y == y)
+			return 1;
+	}
+	for (int i = 1; i < snake->length; i++) {
+		if (snake->body[i].x == x && snake->body[i].y == y)
+			return 1;
+	}
+	for (int i = 0; i < game->playerCount; i++) {
+		if (i == index) continue;
+		snake_t* snakeOther = &game->snakes[i];
+		for (int j = 0; j < snakeOther->length; j++)
+			if (snakeOther->body[j].x == x && snakeOther->body[j].y == y)
+				return 1;
+	}
+	return 0;
 }
