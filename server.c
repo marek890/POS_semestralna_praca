@@ -13,11 +13,15 @@
 #define MAX_CLIENTS 5
 #define BUFFER_SIZE 1024
 
-typedef struct {
+typedef struct client_data client_data_t;
+typedef struct data data_t;
+
+struct data {
 	int clientCount;
 	int in, out;
 	int server_fd;
 	int clients[MAX_CLIENTS];
+	client_data_t* clientData[MAX_CLIENTS];
 	_Bool isOff;
 	_Bool gameOver;
 	_Bool isTimed;
@@ -27,13 +31,30 @@ typedef struct {
 	sem_t space;
 	sem_t clientsSem;
 	pthread_mutex_t mutex;
-} data_t;
+};
 
-typedef struct {
+struct client_data {
 	int client_fd;
 	data_t* data;
 	int id;
-} client_data_t;
+};
+
+void remove_client(data_t* data, int index) {
+	int last = data->clientCount - 1;
+	data->>game.snakes[index].alive = 0;
+
+	if (index != last) {
+		data->clients[index] = data->clients[last];
+		data->game.snakes[index] = data->game.snakes[last];
+		data->clientData[index] = data->clientData[last];
+
+		data->clientData[index]->id = index;
+	}
+
+	data->clientData[last] = NULL;
+	data->clientCount--;
+	data->game.playerCount--;
+}
 
 void* client_message(void* arg) {
 	client_data_t* client = (client_data_t*)arg;
@@ -56,9 +77,7 @@ void* client_message(void* arg) {
 		pthread_mutex_unlock(&data->mutex);
 	}
 	pthread_mutex_lock(&data->mutex);	
-	data->clientCount--;
-	data->game.snakes[client->id].alive = 0;
-	data->game.playerCount--;
+	remove_client(data, client->id);
 	sem_post(&data->space);
 	pthread_mutex_unlock(&data->mutex);
 	close(client->client_fd);
@@ -68,7 +87,6 @@ void* client_message(void* arg) {
 
 void* accept_clients(void* arg) {
 	data_t* data = (data_t*)arg;
-	int id = 0;
 
 	while (1) {
 		pthread_mutex_lock(&data->mutex);
@@ -84,14 +102,12 @@ void* accept_clients(void* arg) {
 		client_data_t* client = malloc(sizeof(client_data_t));
 		client->client_fd = client_fd;
 		client->data = data;
-		client->id = id;
-		id = (id + 1) % MAX_CLIENTS;
 
 		sem_wait(&data->space);
 		pthread_mutex_lock(&data->mutex);
 
-		int add = add_snake(&data->game);
-		if (add < 0)
+		int id = add_snake(&data->game);
+		if (id < 0)
 		{
 			pthread_mutex_unlock(&data->mutex);
 			close(client_fd);
@@ -99,7 +115,9 @@ void* accept_clients(void* arg) {
 			continue;
 		}
 		
-		data->clients[data->clientCount] = client_fd;
+		client->id = id;
+		data->clients[id] = client_fd;
+		data->clientData[id] = client;
 		data->clientCount++;
 			//printf("Klient sa pripojil!\n");
 
@@ -217,10 +235,12 @@ int main(int argc, char** argv) {
 	data.in = 0;
 	data.out = 0;
 	data.gameOver = 0;
+	data.isTimed = 0;
 	init_game(&data.game, atoi(argv[6]), atoi(argv[7]));
 	if (atoi(argv[3]) == 2) {
 		data.startTime = time(NULL);
 		data.maxGameTime = atoi(argv[4]);
+		data.isTimed = 1;
 	}
 	pthread_mutex_init(&data.mutex, NULL);
 	sem_init(&data.space, 0, MAX_CLIENTS);
