@@ -124,7 +124,6 @@ int connected(int port) {
 	keypad(stdscr, TRUE);
 	nodelay(stdscr, TRUE);
 
-	
 	pthread_mutex_init(&data.mutex, NULL);
 	pthread_t input_th, render_th;
 	pthread_create(&input_th, NULL, client_input, &data);
@@ -145,6 +144,7 @@ int main(int argc, char** argv) {
 	int menuChoice = -1;
 	int regimeChoice = -1;
 	int worldChoice = -1;
+	int multiplayerChoice = -1;
 	int gameTime = 0;
 	int x = 0;
 	int y = 0;
@@ -162,6 +162,12 @@ int main(int argc, char** argv) {
 	scanf("%d", &menuChoice);
 
 	if (menuChoice == 1) {
+		printf("Vyber počet hráčov\n");
+		printf("[1] Jeden hráč\n");
+		printf("[2] Viac hráčov\n");
+
+		scanf("%d". &multiplayerChoice);
+
 		printf("Vyber herný režim\n");
 		printf("[1] Štandardný\n");
 		printf("[2] Časový\n");
@@ -189,10 +195,18 @@ int main(int argc, char** argv) {
 		scanf("%d", &port);
 
 		char portStr[6];
+		char multiplayerStr[2];
+		char regimeStr[2];
+		char timeStr[4];
+		char worldStr[2];
 		char xStr[5];
 		char yStr[5];
 
 		snprintf(portStr, sizeof(portStr), "%d", port);
+		snprintf(multiplayerStr, sizeof(multiplayerStr), "%d", multiplayerChoice);
+		snprintf(regimeStr, sizeof(regimeStr), "%d", regimeChoice);
+		snprintf(timeStr, sizeof(timeStr), "%d", timeChoice);
+		snprintf(worldStr, sizeof(worldStr), "%d", worldChoice);
 		snprintf(xStr, sizeof(xStr), "%d", x);
 		snprintf(yStr, sizeof(yStr), "%d", y);
 
@@ -203,7 +217,7 @@ int main(int argc, char** argv) {
 		}
 
 		if (pid == 0) {
-			execl("./server", "./server", portStr, xStr, yStr, NULL);
+			execl("./server", "./server", portStr, multiplayerStr, regimeStr, timeStr, worldStr, xStr, yStr, NULL);
 		}
 		else {
 			sleep(1);
