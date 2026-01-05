@@ -6,6 +6,10 @@ void init_game(game_t* game, _Bool hasObstacles, int width, int length) {
 	game->playerCount = 0;
 	game->hasObstacles = hasObstacles;
 	game->obstacleCount = 0;
+	game->isTimed = 0;
+	game->elapsedTime = 0;
+	game->maxGameTime = 0;
+	game->startTime = 0;
 
 	game->fruits[0].pos.x = rand() % width;
 	game->fruits[0].pos.y = rand() % length;
@@ -152,3 +156,4 @@ int check_collision(game_t* game, int index) {
 	}
 	return 0;
 }
+
