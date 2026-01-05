@@ -43,10 +43,10 @@ void* client_message(void* arg) {
 		
 		pthread_mutex_lock(&data->mutex);
 		switch (ch) {
-			case 'w': game->snakes[client->id].dir = UP; break;			
-			case 's': game->snakes[client->id].dir = DOWN; break;			
-			case 'a': game->snakes[client->id].dir = LEFT; break;			
-			case 'd': game->snakes[client->id].dir = RIGHT; break;
+			case 'w': set_direction(game->snakes[client->id], UP); break;			
+			case 's': set_direction(game->snakes[client->id], DOWN); break;			
+			case 'a': set_direction(game->snakes[client->id], LEFT); break;			
+			case 'd': set_direction(game->snakes[client->id], RIGHT); break;
 		}
 		pthread_mutex_unlock(&data->mutex);
 	}
@@ -142,7 +142,7 @@ void* game_loop(void* arg) {
 	data_t* data = (data_t*)arg;
 	
 	while (1) {
-		usleep(50000);
+		usleep(200000);
 
 		pthread_mutex_lock(&data->mutex);
 		update_game(&data->game);
