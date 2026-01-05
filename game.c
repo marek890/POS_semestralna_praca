@@ -82,16 +82,19 @@ void move_snake(snake_t* snake) {
 	}
 }
 
-int add_snake(game_t* game) {
+int add_snake(game_t* game, int id) {
 	if (game->playerCount >= MAX_PLAYERS)
 		return -1;
 
+	int colors[] = {1,2,3,4,5};
 	int index = game->playerCount;
 	snake_t* snake = &game->snakes[index];
 
 	snake->length = 1;
 	snake->dir = RIGHT;
 	snake->alive = 1;
+	snake->playerID = id;
+	snake->color = colors[id % 5];
 
 	int x, y; 
 	do {
