@@ -96,6 +96,7 @@ void* accept_clients(void* arg) {
 		
 		data->clients[data->clientCount] = client_fd;
 		data->clientCount++;
+		sleep(3);
 		//printf("Klient sa pripojil!\n");
 
 		pthread_mutex_unlock(&data->mutex);
