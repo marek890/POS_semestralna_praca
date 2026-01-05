@@ -156,3 +156,4 @@ int check_collision(game_t* game, int index) {
 	}
 	return 0;
 }
+
