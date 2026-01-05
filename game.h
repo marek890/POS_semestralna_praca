@@ -38,7 +38,7 @@ typedef struct {
 	int playerCount;
 	int width, length;
 	_Bool hasObstacles;
-	_Bool isTimed
+	_Bool isTimed;
 	time_t startTime;
 	int maxGameTime;
 	int elapsedTime;
