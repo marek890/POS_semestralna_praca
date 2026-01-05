@@ -166,7 +166,7 @@ int main(int argc, char** argv) {
 		printf("[1] Jeden hráč\n");
 		printf("[2] Viac hráčov\n");
 
-		scanf("%d". &multiplayerChoice);
+		scanf("%d", &multiplayerChoice);
 
 		printf("Vyber herný režim\n");
 		printf("[1] Štandardný\n");
@@ -205,7 +205,7 @@ int main(int argc, char** argv) {
 		snprintf(portStr, sizeof(portStr), "%d", port);
 		snprintf(multiplayerStr, sizeof(multiplayerStr), "%d", multiplayerChoice);
 		snprintf(regimeStr, sizeof(regimeStr), "%d", regimeChoice);
-		snprintf(timeStr, sizeof(timeStr), "%d", timeChoice);
+		snprintf(timeStr, sizeof(timeStr), "%d", gameTime);
 		snprintf(worldStr, sizeof(worldStr), "%d", worldChoice);
 		snprintf(xStr, sizeof(xStr), "%d", x);
 		snprintf(yStr, sizeof(yStr), "%d", y);
