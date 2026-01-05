@@ -111,7 +111,7 @@ void* accept_clients(void* arg) {
 		sleep(3);
 	}
 	
-	for (int i = 0; < data->game.playerCount; i++) {
+	for (int i = 0; i < data->game.playerCount; i++) {
 		data->game.snakes[i].alive = 0;
 	}
 
