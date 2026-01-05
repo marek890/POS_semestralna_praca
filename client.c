@@ -126,7 +126,20 @@ void* client_render(void* arg) {
 				mvaddch(game.obstacles[i].pos.y + 1, game.obstacles[i].pos.x + 1, '@');
 			} 
 			
-			mvprintf(4, posX, "SKORE");
+			mvprintw(4, posX, "CAS HRY");
+			if (game.isTimed) {
+				int remaining = game.maxGameTime - game.elapsedTime;
+				if (remaining < 0) remaining = 0;
+
+				mvprintw(2, posX, "ZOSTAVA:");
+				mvprintw(3, posX, "%02d:%02d", remaining / 60, remaining % 60);
+			}
+			else {
+				mvprintw(2, posX, "UPLYNUL:");
+				mvprintw(3, posX, "%02d:%02d", game.elapsedTime / 60, game.elapsedTime % 60);
+			}
+
+			mvprintw(4, posX, "SKORE");
 
 			for (int i = 0; i < game.playerCount; i++) {
 				snake_t* snake = &game.snakes[i];
