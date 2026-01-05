@@ -96,15 +96,16 @@ void* accept_clients(void* arg) {
 		
 		data->clients[data->clientCount] = client_fd;
 		data->clientCount++;
-		sleep(3);
-		//printf("Klient sa pripojil!\n");
+			//printf("Klient sa pripojil!\n");
 
 		pthread_mutex_unlock(&data->mutex);
 		sem_post(&data->clientsSem);
 
 		pthread_t client_th;
 		pthread_create(&client_th, NULL, client_message, client);
-		pthread_detach(client_th);
+		pthread_detach(client_th);	
+		sleep(3);
+
 
 	}
 	return NULL;
