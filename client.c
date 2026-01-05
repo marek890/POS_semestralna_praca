@@ -10,23 +10,11 @@
 #include <locale.h>
 #include "game.h"
 
-#define BUFFER_SIZE 1024
-
 typedef struct {
 	int client_fd;
 	_Bool isPaused;
 	pthread_mutex_t mutex;
 } data_t;
-
-ssize_t recv_all(int fd, void* buffer, size_t size) {
-	size_t received = 0;
-	while (received < size) {
-		ssize_t r = recv(fd, (char*)buffer + received, size - received, 0);
-		if (r <= 0) return r;
-		received += r;
-	}
-	return received;
-}
 
 int show_main_menu(data_t* data) {
 	int choice = -1;
@@ -210,8 +198,6 @@ int connected(int port, data_t* data) {
 	init_pair(3, COLOR_BLUE, COLOR_BLACK);
 	init_pair(4, COLOR_YELLOW, COLOR_BLACK);
 	init_pair(5, COLOR_CYAN, COLOR_BLACK);
-
-
 
 	pthread_mutex_init(&data->mutex, NULL);
 	pthread_t input_th, render_th;
