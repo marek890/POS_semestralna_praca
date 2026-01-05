@@ -117,12 +117,12 @@ void* client_render(void* arg) {
 				int remaining = game.maxGameTime - game.elapsedTime;
 				if (remaining < 0) remaining = 0;
 
-				mvprintw(2, posX, "ZOSTAVA:");
-				mvprintw(3, posX, "%02d:%02d", remaining / 60, remaining % 60);
+				mvprintw(1, posX, "ZOSTAVA:");
+				mvprintw(2, posX, "%02d:%02d", remaining / 60, remaining % 60);
 			}
 			else {
-				mvprintw(2, posX, "UPLYNULO:");
-				mvprintw(3, posX, "%02d:%02d", game.elapsedTime / 60, game.elapsedTime % 60);
+				mvprintw(1, posX, "UPLYNULO:");
+				mvprintw(2, posX, "%02d:%02d", game.elapsedTime / 60, game.elapsedTime % 60);
 			}
 
 			mvprintw(4, posX, "SKORE");
