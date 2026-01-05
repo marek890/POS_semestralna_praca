@@ -122,8 +122,8 @@ void* client_render(void* arg) {
 			}
 
 			for (int i = 0; i < game.obstacleCount; i++) {
-				int x = game.obstacles[i].pos.x;
-				int y = game.obstacles[i].pos.y;
+				int x = game.obstacles[i].pos.x + 1;
+				int y = game.obstacles[i].pos.y + 1;
 				mvaddch(y, x, '@');
 			} 
 
