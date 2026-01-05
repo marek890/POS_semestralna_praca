@@ -24,6 +24,7 @@ struct data {
 	client_data_t* clientData[MAX_CLIENTS];
 	_Bool isOff;
 	_Bool gameOver;
+	_Bool singlePlayer;
 	game_t game;
 	sem_t space;
 	sem_t clientsSem;
@@ -87,6 +88,7 @@ void* accept_clients(void* arg) {
 
 	while (1) {
 		pthread_mutex_lock(&data->mutex);
+		if (data->singleplayer && data->clientCount == 1) continue; 
 		if (data->isOff || data->gameOver) {
 			pthread_mutex_unlock(&data->mutex);
 			break;
@@ -144,7 +146,6 @@ void* server_shutdown(void* arg) {
 		pthread_mutex_unlock(&data->mutex);
 
 		if (count == 0 || data->gameOver) {
-			//printf("Server sa vypne za %d sekúnd.\n", countdown);
 			sleep(1);
 			countdown--;
 
@@ -158,7 +159,6 @@ void* server_shutdown(void* arg) {
 		else
 			countdown = 10;
 	}
-	//printf("Server je vypnutý!\n");
 
 	return NULL;
 }
@@ -234,6 +234,7 @@ int main(int argc, char** argv) {
 	data.in = 0;
 	data.out = 0;
 	data.gameOver = 0;
+	data.singleplayer = (atoi(argv[2]) == 1);
 	_Bool hasObstacles = (atoi(argv[5]) == 2);
 	init_game(&data.game, hasObstacles, atoi(argv[6]), atoi(argv[7]));
 	data.game.startTime = time(NULL);
