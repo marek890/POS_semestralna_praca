@@ -24,9 +24,6 @@ struct data {
 	client_data_t* clientData[MAX_CLIENTS];
 	_Bool isOff;
 	_Bool gameOver;
-	_Bool isTimed;
-	time_t startTime;
-	int maxGameTime;
 	game_t game;
 	sem_t space;
 	sem_t clientsSem;
@@ -174,9 +171,11 @@ void* game_loop(void* arg) {
 
 		pthread_mutex_lock(&data->mutex);
 		
-		if (data->isTimed) {
+		if (data->game.isTimed) {
 			time_t now = time(NULL);
-			if (difftime(now, data->startTime) >= data->maxGameTime) {
+			data->game.elapsedTime = (int)difftime(now, data->game.startTime);
+
+				if (data->game.elapsedTime >= data->game.maxGameTime) {
 				data->gameOver = 1;
 				pthread_mutex_unlock(&data->mutex);
 				break;
@@ -235,13 +234,12 @@ int main(int argc, char** argv) {
 	data.in = 0;
 	data.out = 0;
 	data.gameOver = 0;
-	data.isTimed = 0;
 	_Bool hasObstacles = (atoi(argv[5]) == 2);
 	init_game(&data.game, hasObstacles, atoi(argv[6]), atoi(argv[7]));
 	if (atoi(argv[3]) == 2) {
-		data.startTime = time(NULL);
-		data.maxGameTime = atoi(argv[4]);
-		data.isTimed = 1;
+		data.game.startTime = time(NULL);
+		data.game.maxGameTime = atoi(argv[4]);
+		data.game.isTimed = 1;
 	}
 	pthread_mutex_init(&data.mutex, NULL);
 	sem_init(&data.space, 0, MAX_CLIENTS);
