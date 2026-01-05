@@ -236,7 +236,8 @@ int main(int argc, char** argv) {
 	data.out = 0;
 	data.gameOver = 0;
 	data.isTimed = 0;
-	init_game(&data.game, atoi(argv[6]), atoi(argv[7]));
+	_Bool hasObstacles = (atoi(argv[5]) == 2);
+	init_game(&data.game, hasObstacles, atoi(argv[6]), atoi(argv[7]));
 	if (atoi(argv[3]) == 2) {
 		data.startTime = time(NULL);
 		data.maxGameTime = atoi(argv[4]);
