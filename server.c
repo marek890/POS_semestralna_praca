@@ -25,6 +25,7 @@ struct data {
 	_Bool isOff;
 	_Bool gameOver;
 	_Bool singleplayer;
+	_Bool pauseGame;
 	game_t game;
 	sem_t space;
 	sem_t clientsSem;
@@ -87,19 +88,27 @@ void* accept_clients(void* arg) {
 	data_t* data = (data_t*)arg;
 
 	int nextID = 0;
-	while (1) {
+	while (1) {	
+		int client_fd = accept(data->server_fd, NULL, NULL);
+		if (client_fd < 0) {
+			usleep(10000);
+			continue;
+		}
+		
 		pthread_mutex_lock(&data->mutex);
-		if (data->singleplayer && data->clientCount == 1) continue; 
+		if (data->singleplayer && data->clientCount >= 1) {
+			pthread_mutex_unlock(&data->mutex);
+			close(client_fd);
+			continue;
+		}
+
 		if (data->isOff || data->gameOver) {
 			pthread_mutex_unlock(&data->mutex);
 			break;
 		}
 		pthread_mutex_unlock(&data->mutex);
 
-		int client_fd = accept(data->server_fd, NULL, NULL);
-		if (client_fd < 0) continue;
-		
-		client_data_t* client = malloc(sizeof(client_data_t));
+			client_data_t* client = malloc(sizeof(client_data_t));
 		client->client_fd = client_fd;
 		client->data = data;
 				sem_wait(&data->space);
@@ -119,15 +128,19 @@ void* accept_clients(void* arg) {
 		data->clients[id] = client_fd;
 		data->clientData[id] = client;
 		data->clientCount++;
-			//printf("Klient sa pripojil!\n");
-
+		data->pauseGame = 1;
 		pthread_mutex_unlock(&data->mutex);
 		sem_post(&data->clientsSem);
+
+		sleep(3);
+
+		pthread_mutex_lock(&data->mutex);
+		data->pauseGame = 0;
+		pthread_mutex_unlock(&data->mutex);
 
 		pthread_t client_th;
 		pthread_create(&client_th, NULL, client_message, client);
 		pthread_detach(client_th);	
-		sleep(3);
 	}
 	
 	for (int i = 0; i < data->game.playerCount; i++) {
@@ -171,7 +184,12 @@ void* game_loop(void* arg) {
 		usleep(200000);
 
 		pthread_mutex_lock(&data->mutex);
-		
+	
+		if (data->pauseGame) {
+			pthread_mutex_unlock(&data->mutex);
+			continue;
+		}
+
 		time_t now = time(NULL);
 		data->game.elapsedTime = (int)difftime(now, data->game.startTime);
 
@@ -230,6 +248,7 @@ int main(int argc, char** argv) {
 	int flags = fcntl(data.server_fd, F_GETFL, 0);
 	fcntl(data.server_fd, F_SETFL, flags | O_NONBLOCK);
 
+	data.pauseGame = 0;
 	data.clientCount = 0;
 	data.isOff = 0;
 	data.in = 0;
