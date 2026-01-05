@@ -106,7 +106,7 @@ void* client_render(void* arg) {
 		int posX = game.width + 3;
 
 		if (!data->isPaused) {
-			int r = recv_all(data->client_fd, &game, sizeof(game_t));
+			int r = recv(data->client_fd, &game, sizeof(game_t), 0);
 			if (r <= 0) break;
 
 			erase();
@@ -125,7 +125,6 @@ void* client_render(void* arg) {
 				mvaddch(game.obstacles[i].pos.y + 1, game.obstacles[i].pos.x + 1, '@');
 			} 
 			
-			mvprintw(1, posX, "CAS HRY");
 			if (game.isTimed) {
 				int remaining = game.maxGameTime - game.elapsedTime;
 				if (remaining < 0) remaining = 0;
@@ -134,7 +133,7 @@ void* client_render(void* arg) {
 				mvprintw(3, posX, "%02d:%02d", remaining / 60, remaining % 60);
 			}
 			else {
-				mvprintw(2, posX, "UPLYNUL:");
+				mvprintw(2, posX, "UPLYNULO:");
 				mvprintw(3, posX, "%02d:%02d", game.elapsedTime / 60, game.elapsedTime % 60);
 			}
 
@@ -195,6 +194,7 @@ int connected(int port, data_t* data) {
 	
 	setlocale(LC_ALL, "");
 	initscr();
+	curs_set(0);
 	cbreak();
 	noecho();
 	keypad(stdscr, TRUE);
