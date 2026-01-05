@@ -59,7 +59,6 @@ void* client_input(void* arg) {
 	data_t* data = (data_t*)arg;
 
 	while (1) {
-	
 		int ch = getch();
 		if (ch == ERR) {
 			usleep(5000);
