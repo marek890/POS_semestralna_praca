@@ -171,11 +171,11 @@ void* game_loop(void* arg) {
 
 		pthread_mutex_lock(&data->mutex);
 		
-		if (data->game.isTimed) {
-			time_t now = time(NULL);
-			data->game.elapsedTime = (int)difftime(now, data->game.startTime);
+		time_t now = time(NULL);
+		data->game.elapsedTime = (int)difftime(now, data->game.startTime);
 
-				if (data->game.elapsedTime >= data->game.maxGameTime) {
+		if (data->game.isTimed) {
+			if (data->game.elapsedTime >= data->game.maxGameTime) {
 				data->gameOver = 1;
 				pthread_mutex_unlock(&data->mutex);
 				break;
