@@ -69,20 +69,30 @@ void* client_render(void* arg) {
 		usleep(50000);
 		pthread_mutex_lock(&data->mutex);
 		erase();
-		
+	
+		for (int i = 0; i <= game.width; i++) {
+			mvaddch(0, i, '#');
+			mvaddch(game.length + 1, i, '#');
+		}
+
+		for (int i = 0; i <= game.length; i++) {
+			mvaddch(i, 0, '#');
+			mvaddch(i, game.width + 1, '#');
+		}
+
 		for (int i = 0; i < game.playerCount; i++) {
 			snake_t* snake = &game.snakes[i];
 			for (int j = 0; j < snake->length; j++) {
 				if (snake->body[j].x >= 0 && snake->body[j].x < game.width &&
 					snake->body[j].y >= 0 && snake->body[j].y < game.length) {
-						mvaddch(snake->body[j].y, snake->body[j].x, i == 0 ? 'O' : 'o');
+						mvaddch(snake->body[j].y + 1, snake->body[j].x + 1, j == 0 ? 'O' : 'o');
 				}
 			}
 		}
 
 		for (int i = 0; i < game.playerCount; i++) {
 			fruit_t* fruit = &game.fruits[i];
-			mvaddch(fruit->pos.y, fruit->pos.x, 'F');
+			mvaddch(fruit->pos.y + 1, fruit->pos.x + 1, 'F');
 		}
 
 		refresh();
