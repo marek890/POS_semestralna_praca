@@ -71,3 +71,16 @@ int add_snake(game_t* game) {
 
 	return index;
 }
+
+void set_direction(snake_t* snake, direction_t dir) {
+	if (
+		(snake->dir == UP && dir == DOWN) ||
+		(snake->dir == DOWN && dir == UP) ||
+		(snake->dir == LEFT && dir == RIGHT) ||
+		(snake->dir == RIGHT && dir == LEFT)
+	) {
+		return;
+	}
+
+	snake->dir = dir;
+}
