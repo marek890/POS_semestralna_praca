@@ -173,7 +173,7 @@ void* game_loop(void* arg) {
 }
 
 int main(int argc, char** argv) {
-	if (argc != 4) {
+	if (argc != 8) {
 		fprintf(stderr, "Nesprávny počet argumentov\n");
 		return 1;
 	}
@@ -214,10 +214,10 @@ int main(int argc, char** argv) {
 	data.in = 0;
 	data.out = 0;
 	data.gameOver = 0;
-	init_game(&data.game, atoi(argv[3]), atoi(argv[4]));
-	if (atoi(argv[5]) == 2) {
+	init_game(&data.game, atoi(argv[6]), atoi(argv[7]));
+	if (atoi(argv[3]) == 2) {
 		data.startTime = time(NULL);
-		data.maxGameTime = atoi(argv[6]);
+		data.maxGameTime = atoi(argv[4]);
 	}
 	pthread_mutex_init(&data.mutex, NULL);
 	sem_init(&data.space, 0, MAX_CLIENTS);
