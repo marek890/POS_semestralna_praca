@@ -44,6 +44,6 @@ void update_game(game_t* game);
 void move_snake(snake_t* snake);
 int add_snake(game_t* game);
 void set_direction(snake_t* snake, direction_t dir);
-int check_collison(game_t* game, int index);
+int check_collision(game_t* game, int index);
 _Bool is_position_occupied(game_t* game, int x, int y);
 
