@@ -24,7 +24,7 @@ struct data {
 	client_data_t* clientData[MAX_CLIENTS];
 	_Bool isOff;
 	_Bool gameOver;
-	_Bool singlePlayer;
+	_Bool singleplayer;
 	game_t game;
 	sem_t space;
 	sem_t clientsSem;
