@@ -144,12 +144,10 @@ void* client_render(void* arg) {
 				snake_t* snake = &game.snakes[i];
 				int score = snake->length - 1;
 
-				if (snake->alive)
-					mvprintw(5 + i, posX, "Hrac %d: %d", i + 1, score);
-				else
-					mvprintw(5 + i, posX, "Hrac %d: X", i + 1);
+				mvprintw(5 + i, posX, "Hrac %d: %d", i + 1, score);
 
 				for (int j = 0; j < snake->length; j++) {
+					if (!snake->alive) continue;
 					if (snake->body[j].x >= 0 && snake->body[j].x < game.width &&
 						snake->body[j].y >= 0 && snake->body[j].y < game.length) {
 							mvaddch(snake->body[j].y + 1, snake->body[j].x + 1, j == 0 ? 'O' : 'o');
