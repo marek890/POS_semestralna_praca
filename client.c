@@ -149,7 +149,9 @@ void* client_render(void* arg) {
 					if (!snake->alive) continue;
 					if (snake->body[j].x >= 0 && snake->body[j].x < game.width &&
 						snake->body[j].y >= 0 && snake->body[j].y < game.length) {
+							attron(COLOR_PAIR(snake->color));
 							mvaddch(snake->body[j].y + 1, snake->body[j].x + 1, j == 0 ? 'O' : 'o');
+							attroff(COLOR_PAIR(snake->color));
 					}
 				}
 			}
@@ -199,6 +201,15 @@ int connected(int port, data_t* data) {
 	noecho();
 	keypad(stdscr, TRUE);
 	nodelay(stdscr, TRUE);
+	start_color();
+	use_default_colors();
+	init_pair(1, COLOR_RED, COLOR_BLACK);
+	init_pair(1, COLOR_GREEN, COLOR_BLACK);
+	init_pair(1, COLOR_BLUE, COLOR_BLACK);
+	init_pair(1, COLOR_YELLOW, COLOR_BLACK);
+	init_pair(1, COLOR_CYAN, COLOR_BLACK);
+
+
 
 	pthread_mutex_init(&data->mutex, NULL);
 	pthread_t input_th, render_th;
