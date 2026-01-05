@@ -217,10 +217,12 @@ int main(int argc, char** argv) {
 	data.in = 0;
 	data.out = 0;
 	data.gameOver = 0;
+	data.isTimed = 0;
 	init_game(&data.game, atoi(argv[6]), atoi(argv[7]));
 	if (atoi(argv[3]) == 2) {
 		data.startTime = time(NULL);
 		data.maxGameTime = atoi(argv[4]);
+		data.isTimed = 1;
 	}
 	pthread_mutex_init(&data.mutex, NULL);
 	sem_init(&data.space, 0, MAX_CLIENTS);
