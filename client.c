@@ -125,7 +125,7 @@ void* client_render(void* arg) {
 				mvaddch(game.obstacles[i].pos.y + 1, game.obstacles[i].pos.x + 1, '@');
 			} 
 			
-			mvprintw(4, posX, "CAS HRY");
+			mvprintw(1, posX, "CAS HRY");
 			if (game.isTimed) {
 				int remaining = game.maxGameTime - game.elapsedTime;
 				if (remaining < 0) remaining = 0;
@@ -145,9 +145,9 @@ void* client_render(void* arg) {
 				int score = snake->length - 1;
 
 				if (snake->alive)
-					mvprintw(5 + i, posX, "Hrac: %d: %d:", i + 1, score);
+					mvprintw(5 + i, posX, "Hrac %d: %d", i + 1, score);
 				else
-					mvprintw(5 + i, posX, "Hrac: %d: X:", i + 1);
+					mvprintw(5 + i, posX, "Hrac %d: X", i + 1);
 
 				for (int j = 0; j < snake->length; j++) {
 					if (snake->body[j].x >= 0 && snake->body[j].x < game.width &&
