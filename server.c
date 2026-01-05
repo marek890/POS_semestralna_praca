@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <semaphore.h>
 #include <fcntl.h>
+#include <time.h>
 #include "game.h"
 
 #define MAX_CLIENTS 5
@@ -18,6 +19,9 @@ typedef struct {
 	int server_fd;
 	int clients[MAX_CLIENTS];
 	_Bool isOff;
+	_Bool gameOver;
+	time_t startTime;
+	int maxGameTime;
 	game_t game;
 	sem_t space;
 	sem_t clientsSem;
@@ -67,7 +71,7 @@ void* accept_clients(void* arg) {
 
 	while (1) {
 		pthread_mutex_lock(&data->mutex);
-		if (data->isOff) {
+		if (data->isOff || data->gameOver) {
 			pthread_mutex_unlock(&data->mutex);
 			break;
 		}
@@ -105,9 +109,12 @@ void* accept_clients(void* arg) {
 		pthread_create(&client_th, NULL, client_message, client);
 		pthread_detach(client_th);	
 		sleep(3);
-
-
 	}
+	
+	for (int i = 0; < data->game.playerCount; i++) {
+		data->game.snakes[i].alive = 0;
+	}
+
 	return NULL;
 }
 
@@ -120,7 +127,7 @@ void* server_shutdown(void* arg) {
 		int count = data->clientCount;
 		pthread_mutex_unlock(&data->mutex);
 
-		if (count == 0) {
+		if (count == 0 || data->gameOver) {
 			//printf("Server sa vypne za %d sekúnd.\n", countdown);
 			sleep(1);
 			countdown--;
@@ -147,6 +154,14 @@ void* game_loop(void* arg) {
 		usleep(200000);
 
 		pthread_mutex_lock(&data->mutex);
+
+		time_t now = time(NULL);
+		if (difftime(now, data->startTime) >= data->maxGameTime) {
+			data->gameOver = 1;
+			pthread_mutex_unlock(&data->mutex);
+			break;
+		}
+
 		update_game(&data->game);
 		for (int i = 0; i < data->clientCount; i++) {
 			send(data->clients[i], &data->game, sizeof(game_t), 0);
@@ -158,7 +173,7 @@ void* game_loop(void* arg) {
 }
 
 int main(int argc, char** argv) {
-	if (argc != 4) {
+	if (argc != 8) {
 		fprintf(stderr, "Nesprávny počet argumentov\n");
 		return 1;
 	}
@@ -198,7 +213,12 @@ int main(int argc, char** argv) {
 	data.isOff = 0;
 	data.in = 0;
 	data.out = 0;
-	init_game(&data.game, atoi(argv[2]), atoi(argv[3]));
+	data.gameOver = 0;
+	init_game(&data.game, atoi(argv[6]), atoi(argv[7]));
+	if (atoi(argv[3]) == 2) {
+		data.startTime = time(NULL);
+		data.maxGameTime = atoi(argv[4]);
+	}
 	pthread_mutex_init(&data.mutex, NULL);
 	sem_init(&data.space, 0, MAX_CLIENTS);
 	sem_init(&data.clientsSem, 0, 0);
