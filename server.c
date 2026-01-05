@@ -86,6 +86,7 @@ void* client_message(void* arg) {
 void* accept_clients(void* arg) {
 	data_t* data = (data_t*)arg;
 
+	int nextID = 0;
 	while (1) {
 		pthread_mutex_lock(&data->mutex);
 		if (data->singleplayer && data->clientCount == 1) continue; 
@@ -101,11 +102,11 @@ void* accept_clients(void* arg) {
 		client_data_t* client = malloc(sizeof(client_data_t));
 		client->client_fd = client_fd;
 		client->data = data;
-
-		sem_wait(&data->space);
+				sem_wait(&data->space);
 		pthread_mutex_lock(&data->mutex);
 
-		int id = add_snake(&data->game);
+		int id = add_snake(&data->game, nextID);
+		nextID++;
 		if (id < 0)
 		{
 			pthread_mutex_unlock(&data->mutex);
