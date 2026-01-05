@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <ncurses.h>
+#include <locale.h>
 #include "game.h"
 
 #define BUFFER_SIZE 1024
@@ -49,7 +50,6 @@ int show_main_menu(data_t* data) {
 		if (ch == '1') return 1;
 		if (ch == '2') return 2;
 		if (ch == '3' && data->isPaused) return 3;
-
 
 		refresh();
 	}
@@ -120,6 +120,12 @@ void* client_render(void* arg) {
 				mvaddch(i, 0, '#');
 				mvaddch(i, game.width + 1, '#');
 			}
+
+			for (int i = 0; i < game.obstacleCount; i++) {
+				int x = game.obstacles[i].pos.x;
+				int y = game.obstacles[i].pos.y;
+				mvaddch(y, x, '@');
+			} 
 
 			for (int i = 0; i < game.playerCount; i++) {
 				snake_t* snake = &game.snakes[i];
