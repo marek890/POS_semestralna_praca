@@ -121,6 +121,12 @@ void* client_render(void* arg) {
 				mvaddch(i, game.width + 1, '#');
 			}
 
+			for (int i = 0; i < game.obstacleCount; i++) {
+				int x = game.obstacles[i].pos.x;
+				int y = game.obstacles[i].pos.y;
+				mvaddch(y, x, '@');
+			} 
+
 			for (int i = 0; i < game.playerCount; i++) {
 				snake_t* snake = &game.snakes[i];
 				for (int j = 0; j < snake->length; j++) {
