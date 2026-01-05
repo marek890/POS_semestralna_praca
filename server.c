@@ -87,19 +87,27 @@ void* accept_clients(void* arg) {
 	data_t* data = (data_t*)arg;
 
 	int nextID = 0;
-	while (1) {
+	while (1) {	
+		int client_fd = accept(data->server_fd, NULL, NULL);
+		if (client_fd < 0) {
+			usleep(10000);
+			continue;
+		}
+		
 		pthread_mutex_lock(&data->mutex);
-		if (data->singleplayer && data->clientCount == 1) continue; 
+		if (data->singleplayer && data->clientCount >= 1) {
+			pthread_mutex_unlock(&data->mutex);
+			close(client_fd);
+			continue;
+		}
+
 		if (data->isOff || data->gameOver) {
 			pthread_mutex_unlock(&data->mutex);
 			break;
 		}
 		pthread_mutex_unlock(&data->mutex);
 
-		int client_fd = accept(data->server_fd, NULL, NULL);
-		if (client_fd < 0) continue;
-		
-		client_data_t* client = malloc(sizeof(client_data_t));
+			client_data_t* client = malloc(sizeof(client_data_t));
 		client->client_fd = client_fd;
 		client->data = data;
 				sem_wait(&data->space);
@@ -119,7 +127,6 @@ void* accept_clients(void* arg) {
 		data->clients[id] = client_fd;
 		data->clientData[id] = client;
 		data->clientCount++;
-			//printf("Klient sa pripojil!\n");
 
 		pthread_mutex_unlock(&data->mutex);
 		sem_post(&data->clientsSem);
