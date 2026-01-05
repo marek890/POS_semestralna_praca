@@ -41,7 +41,7 @@ struct client_data {
 
 void remove_client(data_t* data, int index) {
 	int last = data->clientCount - 1;
-	data->>game.snakes[index].alive = 0;
+	data->game.snakes[index].alive = 0;
 
 	if (index != last) {
 		data->clients[index] = data->clients[last];
