@@ -104,6 +104,7 @@ void* client_render(void* arg) {
 	while (1) {
 		usleep(50000);
 		pthread_mutex_lock(&data->mutex);
+		int posX = game.width + 3;
 
 		if (!data->isPaused) {
 			int r = recv_all(data->client_fd, &game, sizeof(game_t));
@@ -122,13 +123,20 @@ void* client_render(void* arg) {
 			}
 
 			for (int i = 0; i < game.obstacleCount; i++) {
-				int x = game.obstacles[i].pos.x;
-				int y = game.obstacles[i].pos.y;
-				mvaddch(y, x, '@');
+				mvaddch(game.obstacles[i].pos.y + 1, game.obstacles[i].pos.x + 1, '@');
 			} 
+			
+			mvprintf(4, posX, "SKORE");
 
 			for (int i = 0; i < game.playerCount; i++) {
 				snake_t* snake = &game.snakes[i];
+				int score = snake->length - 1;
+
+				if (snake->alive)
+					mvprintw(5 + i, posX, "Hrac: %d: %d:", i + 1, score);
+				else
+					mvprintw(5 + i, posX, "Hrac: %d: X:", i + 1);
+
 				for (int j = 0; j < snake->length; j++) {
 					if (snake->body[j].x >= 0 && snake->body[j].x < game.width &&
 						snake->body[j].y >= 0 && snake->body[j].y < game.length) {
@@ -266,10 +274,10 @@ int main(int argc, char** argv) {
 
 		scanf("%d", &worldChoice);
 
-		printf("Zadaj výšku herného sveta\n");
+		printf("Zadaj výšku herného sveta (10 - 40)\n");
 		scanf("%d", &y);
 	
-		printf("Zadaj šírku herného sveta\n");
+		printf("Zadaj šírku herného sveta (40 - 80)\n");
 		scanf("%d", &x);
 
 		printf("Zadaj port\n");
