@@ -169,7 +169,6 @@ int connected(int port, data_t* data) {
 		return 3;
 	}	
 	
-	setlocale(LC_ALL, "");
 	initscr();
 	cbreak();
 	noecho();
