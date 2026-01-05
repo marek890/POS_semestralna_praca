@@ -11,15 +11,12 @@ void init_game(game_t* game, _Bool hasObstacles, int width, int length) {
 	game->maxGameTime = 0;
 	game->startTime = 0;
 
-	game->fruits[0].pos.x = rand() % width;
-	game->fruits[0].pos.y = rand() % length;
-
 	if (hasObstacles) {
-		for (int i = 0; i < MAX_OBSTACLES; i++) {
-			int x, y; 
+		for (int i = 0; i < MAX_OBSTACLES; i++) {	
+			int x, y;
 			do {
-				x = rand() % width;
-				y = rand() % length;
+				x = rand() % game->width;
+				y = rand() % game->length;
 			} while (is_position_occupied(game, x, y));
 
 			game->obstacles[i].pos.x = x;
@@ -95,8 +92,23 @@ int add_snake(game_t* game) {
 	snake->length = 1;
 	snake->dir = RIGHT;
 	snake->alive = 1;
-	snake->body[0].x = game->width / 2;
-	snake->body[0].y = game->length / 2;
+
+	int x, y; 
+	do {
+		x = rand() % game->width;
+		y = rand() % game->length;
+	} while (is_position_occupied(game, x, y));
+
+	snake->body[0].x = x;
+	snake->body[0].y = y;
+
+	do {
+		x = rand() % game->width;
+		y = rand() % game->length;
+	} while (is_position_occupied(game, x, y));
+
+	game->fruits[index].pos.x = x;
+	game->fruits[index].pos.y = y;
 
 	game->playerCount++;
 
