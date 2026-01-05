@@ -175,7 +175,7 @@ int connected(int port, data_t* data) {
 	keypad(stdscr, TRUE);
 	nodelay(stdscr, TRUE);
 
-	pthread_mutex_init(&data.mutex, NULL);
+	pthread_mutex_init(&data->mutex, NULL);
 	pthread_t input_th, render_th;
 	pthread_create(&input_th, NULL, client_input, data);
 	pthread_create(&render_th, NULL, client_render, data);
@@ -205,9 +205,9 @@ int connected(int port, data_t* data) {
 	pthread_join(input_th, NULL);
 	pthread_join(render_th, NULL);
 
-	pthread_mutex_destroy(&data.mutex);
+	pthread_mutex_destroy(&data->mutex);
 	endwin();
-	close(data.client_fd);
+	close(data->client_fd);
 	return 0;
 
 }
