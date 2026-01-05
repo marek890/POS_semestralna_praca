@@ -142,8 +142,10 @@ void* client_render(void* arg) {
 			for (int i = 0; i < game.playerCount; i++) {
 				snake_t* snake = &game.snakes[i];
 				int score = snake->length - 1;
-
-				mvprintw(5 + i, posX, "Hrac %d: %d", i + 1, score);
+	
+				attron(COLOR_PAIR(snake->color));
+				mvprintw(5 + i, posX, "Hrac %d: %d", snake->playerID, score);
+				attroff(COLOR_PAIR(snake->color));
 
 				for (int j = 0; j < snake->length; j++) {
 					if (!snake->alive) continue;
