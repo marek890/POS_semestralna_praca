@@ -7,41 +7,12 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <ncurses.h>
-#include <locale.h>
 #include "game.h"
 
 typedef struct {
 	int client_fd;
-	_Bool isPaused;
 	pthread_mutex_t mutex;
 } data_t;
-
-int show_main_menu(data_t* data) {
-	int choice = -1;
-
-	while(1) {
-		erase();
-		mvprintw(2, 2, "**** Hlavné menu ****");
-		mvprintw(4, 2, "[1] Nová hra");
-		mvprintw(5, 2, "[2] Pripojenie k hre");
-		if (data->isPaused)
-			mvprintw(6, 2, "[3] Pokračovať v hre");
-		mvprintw(7, 2, "[0] Ukončiť");
-
-		int ch = getch();
-		if (ch == ERR) {
-			usleep(5000);
-			continue;
-		}
-
-		if (ch == '0') return 0;
-		if (ch == '1') return 1;
-		if (ch == '2') return 2;
-		if (ch == '3' && data->isPaused) return 3;
-
-		refresh();
-	}
-}
 
 void* client_input(void* arg) {	
 	data_t* data = (data_t*)arg;
@@ -61,11 +32,6 @@ void* client_input(void* arg) {
 				close(data->client_fd);
 				pthread_mutex_unlock(&data->mutex);
 				return NULL;
-			case 'p':
-				pthread_mutex_lock(&data->mutex);
-				data->isPaused = 1;
-				pthread_mutex_unlock(&data->mutex);
-				continue;
 			case KEY_UP:	out = 'w'; break;
 			case KEY_DOWN:	out = 's'; break;
 			case KEY_LEFT:	out = 'a'; break;
@@ -81,8 +47,7 @@ void* client_input(void* arg) {
 
 		}
 		pthread_mutex_lock(&data->mutex);
-		if (!data->isPaused)
-			send(data->client_fd, &out, 1, 0);
+		send(data->client_fd, &out, 1, 0);
 		pthread_mutex_unlock(&data->mutex);
 	}
 
@@ -98,70 +63,71 @@ void* client_render(void* arg) {
 		usleep(50000);
 		pthread_mutex_lock(&data->mutex);
 		int posX = game.width + 3;
+		
+		int r = recv(data->client_fd, &game, sizeof(game_t), 0);
+		if (r <= 0) {
+			pthread_mutex_unlock(&data->mutex);
+			break;
+		}
 
-		if (!data->isPaused) {
-			int r = recv(data->client_fd, &game, sizeof(game_t), 0);
-			if (r <= 0) {
-				pthread_mutex_unlock(&data->mutex);
-				break;
-			}
-
-			erase();
+		erase();
 	
-			for (int i = 0; i < game.width + 2; i++) {
-				mvaddch(0, i, '#');
-				mvaddch(game.length + 1, i, '#');
-			}
+		for (int i = 0; i < game.width + 2; i++) {
+			mvaddch(0, i, '#');
+			mvaddch(game.length + 1, i, '#');
+		}
 
-			for (int i = 0; i < game.length + 2; i++) {
-				mvaddch(i, 0, '#');
-				mvaddch(i, game.width + 1, '#');
-			}
+		for (int i = 0; i < game.length + 2; i++) {
+			mvaddch(i, 0, '#');
+			mvaddch(i, game.width + 1, '#');
+		}
 
-			for (int i = 0; i < game.obstacleCount; i++) {
-				mvaddch(game.obstacles[i].pos.y + 1, game.obstacles[i].pos.x + 1, '@');
-			} 
-			
-			if (game.isTimed) {
-				int remaining = game.maxGameTime - game.elapsedTime;
-				if (remaining < 0) remaining = 0;
+		for (int i = 0; i < game.obstacleCount; i++) {
+			mvaddch(game.obstacles[i].pos.y + 1, game.obstacles[i].pos.x + 1, '@');
+		} 
+		
+		if (game.isTimed) {
+			int remaining = game.maxGameTime - game.elapsedTime;
+			if (remaining < 0) remaining = 0;
 
-				mvprintw(1, posX, "ZOSTAVA:");
-				mvprintw(2, posX, "%02d:%02d", remaining / 60, remaining % 60);
-			}
-			else {
-				mvprintw(1, posX, "UPLYNULO:");
-				mvprintw(2, posX, "%02d:%02d", game.elapsedTime / 60, game.elapsedTime % 60);
-			}
+			mvprintw(1, posX, "ZOSTAVA:");
+			mvprintw(2, posX, "%02d:%02d", remaining / 60, remaining % 60);
+		}
+		else {
+			mvprintw(1, posX, "UPLYNULO:");
+			mvprintw(2, posX, "%02d:%02d", game.elapsedTime / 60, game.elapsedTime % 60);
+		}
 
-			mvprintw(4, posX, "SKORE");
+		mvprintw(4, posX, "SKORE");
 
-			for (int i = 0; i < game.playerCount; i++) {
-				snake_t* snake = &game.snakes[i];
-				int score = snake->length - 1;
+		for (int i = 0; i < game.playerCount; i++) {
+			snake_t* snake = &game.snakes[i];
+			int score = snake->length - 1;
 	
-				attron(COLOR_PAIR(snake->color));
-				mvprintw(5 + i, posX, "Hrac %d: %d", snake->playerID, score);
-				attroff(COLOR_PAIR(snake->color));
+			attron(COLOR_PAIR(snake->color));
+			mvprintw(5 + i, posX, "Hrac %d: %d", snake->playerID, score);
+			attroff(COLOR_PAIR(snake->color));
 
-				for (int j = 0; j < snake->length; j++) {
-					if (!snake->alive) continue;
-					if (snake->body[j].x >= 0 && snake->body[j].x < game.width &&
-						snake->body[j].y >= 0 && snake->body[j].y < game.length) {
-							attron(COLOR_PAIR(snake->color));
-							mvaddch(snake->body[j].y + 1, snake->body[j].x + 1, j == 0 ? 'O' : 'o');
-							attroff(COLOR_PAIR(snake->color));
-					}
+			for (int j = 0; j < snake->length; j++) {
+				if (!snake->alive) continue;
+				if (snake->body[j].x >= 0 && snake->body[j].x < game.width &&
+					snake->body[j].y >= 0 && snake->body[j].y < game.length) {
+						attron(COLOR_PAIR(snake->color));
+						mvaddch(snake->body[j].y + 1, snake->body[j].x + 1, j == 0 ? 'O' : 'o');
+						attroff(COLOR_PAIR(snake->color));
 				}
 			}
-
-			for (int i = 0; i < game.playerCount; i++) {
-				fruit_t* fruit = &game.fruits[i];
-				mvaddch(fruit->pos.y + 1, fruit->pos.x + 1, 'F');
-			}
-
-			refresh();
 		}
+
+		for (int i = 0; i < game.playerCount; i++) {
+			fruit_t* fruit = &game.fruits[i];
+			mvaddch(fruit->pos.y + 1, fruit->pos.x + 1, 'F');
+		}
+
+		mvprintw(15, posX, "Pre odpojenie stlac Q");
+
+		refresh();
+		
 		pthread_mutex_unlock(&data->mutex);
 
 	}
@@ -193,7 +159,6 @@ int connected(int port, data_t* data) {
 		return 3;
 	}	
 	
-	setlocale(LC_ALL, "");
 	initscr();
 	curs_set(0);
 	cbreak();
@@ -219,12 +184,11 @@ int connected(int port, data_t* data) {
 	pthread_mutex_destroy(&data->mutex);
 	endwin();
 	close(data->client_fd);
-	return 0;
-
+	
+	return -1;
 }
 
-
-int main(int argc, char** argv) {
+int show_main_menu() {
 	int menuChoice = -1;
 	int regimeChoice = -1;
 	int worldChoice = -1;
@@ -234,50 +198,65 @@ int main(int argc, char** argv) {
 	int y = 0;
 	int port = 0;
 	data_t data;
-	data.isPaused = 0;
-
-	printf("****Hlavné menu****\n");
-	printf("[1] Nová hra\n");
-	printf("[2] Pripojenie k hre\n");
-	printf("[0] Ukončiť\n");
-	printf("Vyber si jednu z možností (zadaj číselnú hodnotu)\n");
 	
-	scanf("%d", &menuChoice);
+	do {
+		printf("****Hlavné menu****\n");
+		printf("[1] Nová hra\n");
+		printf("[2] Pripojenie k hre\n");
+		printf("[0] Ukončiť\n");
+		printf("Vyber si jednu z možností (zadaj číselnú hodnotu)\n");
+	
+		scanf("%d", &menuChoice);
+	} while (menuChoice < 0 || menuChoice > 2);
 
 	if (menuChoice == 0) return 0;
 
 	if (menuChoice == 1) {
-		printf("Vyber počet hráčov\n");
-		printf("[1] Jeden hráč\n");
-		printf("[2] Viac hráčov\n");
+		do {
+			printf("Vyber počet hráčov\n");
+			printf("[1] Jeden hráč\n");
+			printf("[2] Viac hráčov\n");
 
-		scanf("%d", &multiplayerChoice);
+			scanf("%d", &multiplayerChoice);
+		} while (multiplayerChoice < 1 || multiplayerChoice > 2);
 
-		printf("Vyber herný režim\n");
-		printf("[1] Štandardný\n");
-		printf("[2] Časový\n");
+		do {
+			printf("Vyber herný režim\n");
+			printf("[1] Štandardný\n");
+			printf("[2] Časový\n");
 
-		scanf("%d", &regimeChoice);
-		
+			scanf("%d", &regimeChoice);
+		} while (regimeChoice < 1 || regimeChoice > 2);
+
 		if (regimeChoice == 2) {
-			printf("Zadaj čas hry\n");
-			scanf("%d", &gameTime);
+			do {
+				printf("Zadaj čas hry (20 - 1000) \n");
+				scanf("%d", &gameTime);
+			} while (gameTime < 20 || gameTime > 1000);
 		}
+		
+		do {
+			printf("Vyber typ herného sveta\n");
+			printf("[1] Bez prekážok\n");
+			printf("[2] S prekážkami\n");
 
-		printf("Vyber typ herného sveta\n");
-		printf("[1] Bez prekážok\n");
-		printf("[2] S prekážkami\n");
+			scanf("%d", &worldChoice);
+		} while (worldChoice < 1 || worldChoice > 2);
 
-		scanf("%d", &worldChoice);
+		do {
+			printf("Zadaj výšku herného sveta (20 - 40)\n");
+			scanf("%d", &y);
+		} while (y < 20 || y > 40);
 
-		printf("Zadaj výšku herného sveta (10 - 40)\n");
-		scanf("%d", &y);
-	
-		printf("Zadaj šírku herného sveta (40 - 80)\n");
-		scanf("%d", &x);
-
-		printf("Zadaj port\n");
-		scanf("%d", &port);
+		do {
+			printf("Zadaj šírku herného sveta (40 - 80)\n");
+			scanf("%d", &x);
+		} while (x < 40 || x > 80);
+		
+		do {
+			printf("Zadaj port (1024 - 49151) \n");
+			scanf("%d", &port);
+		} while (port < 1024 || port > 49151);
 
 		char portStr[6];
 		char multiplayerStr[2];
@@ -308,8 +287,6 @@ int main(int argc, char** argv) {
 			sleep(1);
 			return connected(port, &data);
 		}
-
-
 	}
 
 	if (menuChoice == 2) {
@@ -317,6 +294,16 @@ int main(int argc, char** argv) {
 		scanf("%d", &port);
 		return connected(port, &data);
 	}
-	
+
+	return 0;
+}
+
+int main(int argc, char** argv) {
+
+	int quit = -1;
+	while (quit != 0)
+	{
+		quit = show_main_menu();
+	}
 	return 0;
 }
