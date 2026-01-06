@@ -55,6 +55,12 @@ void* client_input(void* arg) {
 
 		char out;
 		switch (ch) {
+			case 'q':
+				pthread_mutex_lock(&data->mutex);
+				shutdown(data->client_fd, SHUT_RDWR);
+				close(data->client_fd);
+				pthread_mutex_unlock(&data->mutex);
+				return NULL;
 			case 'p':
 				pthread_mutex_lock(&data->mutex);
 				data->isPaused = 1;
@@ -95,7 +101,10 @@ void* client_render(void* arg) {
 
 		if (!data->isPaused) {
 			int r = recv(data->client_fd, &game, sizeof(game_t), 0);
-			if (r <= 0) break;
+			if (r <= 0) {
+				pthread_mutex_unlock(&data->mutex);
+				break;
+			}
 
 			erase();
 	
@@ -156,7 +165,7 @@ void* client_render(void* arg) {
 		pthread_mutex_unlock(&data->mutex);
 
 	}
-
+	endwin();
 	return NULL;
 }
 
@@ -203,28 +212,6 @@ int connected(int port, data_t* data) {
 	pthread_t input_th, render_th;
 	pthread_create(&input_th, NULL, client_input, data);
 	pthread_create(&render_th, NULL, client_render, data);
-
-	while (1) {
-		if (data->isPaused) {
-			int choice = show_main_menu(data);
-			pthread_mutex_lock(&data->mutex);
-			
-			if (choice == 3) {
-				data->isPaused = 0;
-			}
-			else if (choice == 0) {
-				pthread_mutex_unlock(&data->mutex);
-				break;
-			} else if (choice == 1) {
-				pthread_mutex_unlock(&data->mutex);
-				close(data->client_fd);
-				endwin();
-				return 1;
-			}
-			pthread_mutex_unlock(&data->mutex);
-		}
-		usleep(50000);
-	}
 
 	pthread_join(input_th, NULL);
 	pthread_join(render_th, NULL);
