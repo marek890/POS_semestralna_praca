@@ -243,6 +243,7 @@ int main(int argc, char** argv) {
 	int flags = fcntl(data.server_fd, F_GETFL, 0);
 	fcntl(data.server_fd, F_SETFL, flags | O_NONBLOCK);
 
+	srand(time(NULL));
 	data.pauseGame = 0;
 	data.clientCount = 0;
 	data.isOff = 0;
