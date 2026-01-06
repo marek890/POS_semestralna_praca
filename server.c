@@ -132,12 +132,6 @@ void* accept_clients(void* arg) {
 		pthread_mutex_unlock(&data->mutex);
 		sem_post(&data->clientsSem);
 
-		sleep(3);
-
-		pthread_mutex_lock(&data->mutex);
-		data->pauseGame = 0;
-		pthread_mutex_unlock(&data->mutex);
-
 		pthread_t client_th;
 		pthread_create(&client_th, NULL, client_message, client);
 		pthread_detach(client_th);	
@@ -185,11 +179,6 @@ void* game_loop(void* arg) {
 
 		pthread_mutex_lock(&data->mutex);
 	
-		if (data->pauseGame) {
-			pthread_mutex_unlock(&data->mutex);
-			continue;
-		}
-
 		time_t now = time(NULL);
 		data->game.elapsedTime = (int)difftime(now, data->game.startTime);
 
@@ -201,9 +190,15 @@ void* game_loop(void* arg) {
 			}
 		}
 
-		update_game(&data->game);
+		update_game(&data->game);	
+
 		for (int i = 0; i < data->clientCount; i++) {
 			send(data->clients[i], &data->game, sizeof(game_t), 0);
+		}
+
+		if (data->pauseGame) {
+			data->pauseGame = 0;
+			sleep(3);
 		}
 		pthread_mutex_unlock(&data->mutex);
 	}
@@ -214,7 +209,7 @@ void* game_loop(void* arg) {
 int main(int argc, char** argv) {
 	if (argc != 8) {
 		fprintf(stderr, "Nesprávny počet argumentov\n");
-		return 1;
+		return -1;
 	}
 
 	data_t data;
@@ -222,7 +217,7 @@ int main(int argc, char** argv) {
 	data.server_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (data.server_fd < 0) {
 		perror("Chyba pri vytvárani socketu\n");
-		return 2;
+		return -2;
 	}
 
 	int opt = 1;
@@ -237,13 +232,13 @@ int main(int argc, char** argv) {
 	if (bind(data.server_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
 		perror("Chyba pri binde\n");
 		close(data.server_fd);
-		return 3;
+		return -3;
 	}
 
 	if (listen(data.server_fd, MAX_CLIENTS) < 0) {
 		perror("Listen zlyhal\n");
 		close(data.server_fd);
-		return 4;
+		return -4;
 	}
 	int flags = fcntl(data.server_fd, F_GETFL, 0);
 	fcntl(data.server_fd, F_SETFL, flags | O_NONBLOCK);
