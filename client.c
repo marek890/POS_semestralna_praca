@@ -11,13 +11,14 @@
 
 typedef struct {
 	int client_fd;
+	_Bool isRunning;
 	pthread_mutex_t mutex;
 } data_t;
 
 void* client_input(void* arg) {	
 	data_t* data = (data_t*)arg;
 
-	while (1) {
+	while (data->isRunning) {
 		int ch = getch();
 		if (ch == ERR) {
 			usleep(5000);
@@ -28,6 +29,7 @@ void* client_input(void* arg) {
 		switch (ch) {
 			case 'q':
 				pthread_mutex_lock(&data->mutex);
+				data->isRunning = 0;
 				shutdown(data->client_fd, SHUT_RDWR);
 				close(data->client_fd);
 				pthread_mutex_unlock(&data->mutex);
@@ -47,7 +49,8 @@ void* client_input(void* arg) {
 
 		}
 		pthread_mutex_lock(&data->mutex);
-		send(data->client_fd, &out, 1, 0);
+		if (data->isRunning)
+			send(data->client_fd, &out, 1, 0);
 		pthread_mutex_unlock(&data->mutex);
 	}
 
@@ -66,6 +69,7 @@ void* client_render(void* arg) {
 		
 		int r = recv(data->client_fd, &game, sizeof(game_t), 0);
 		if (r <= 0) {
+			data->isRunning = 0;
 			pthread_mutex_unlock(&data->mutex);
 			break;
 		}
@@ -100,6 +104,7 @@ void* client_render(void* arg) {
 
 		mvprintw(4, posX, "SKORE");
 
+		int deadSnakes = 0;
 		for (int i = 0; i < game.playerCount; i++) {
 			snake_t* snake = &game.snakes[i];
 			int score = snake->length - 1;
@@ -107,6 +112,15 @@ void* client_render(void* arg) {
 			attron(COLOR_PAIR(snake->color));
 			mvprintw(5 + i, posX, "Hrac %d: %d", snake->playerID, score);
 			attroff(COLOR_PAIR(snake->color));
+
+			if (!snake->alive) {
+				deadSnakes++;
+			}
+
+			if (deadSnakes == game.playerCount) {
+				mvprintw(game.length / 2, game.width / 2 - 3, "GAME OVER!");
+				mvprintw(game.length / 2 + 1, game.width / 2 - 10, "Server sa vypne za 10s...");
+			}
 
 			for (int j = 0; j < snake->length; j++) {
 				if (!snake->alive) continue;
@@ -158,7 +172,8 @@ int connected(int port, data_t* data) {
 		close(data->client_fd);
 		return 3;
 	}	
-	
+
+	data->isRunning = 1;
 	initscr();
 	curs_set(0);
 	cbreak();

@@ -4,7 +4,7 @@
 
 #define MAX_PLAYERS 5
 #define MAX_SNAKE_LENGTH 100
-#define MAX_OBSTACLES 50
+#define MAX_OBSTACLES 25
 
 typedef enum {
 	UP, DOWN, LEFT, RIGHT

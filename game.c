@@ -29,8 +29,10 @@ void init_game(game_t* game, _Bool hasObstacles, int width, int length) {
 void update_game(game_t* game) {
 	for (int i = 0; i < game->playerCount; i++) {
 		snake_t* snake = &game->snakes[i];
-		if (!snake->alive) continue;
 
+		if (!snake->alive) 
+			continue;
+		
 		move_snake(snake);
 		
 		if (snake->body[0].x < 0)

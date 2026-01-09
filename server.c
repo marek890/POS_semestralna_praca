@@ -18,7 +18,6 @@ typedef struct data data_t;
 
 struct data {
 	int clientCount;
-	int in, out;
 	int server_fd;
 	int clients[MAX_CLIENTS];
 	client_data_t* clientData[MAX_CLIENTS];
@@ -27,8 +26,6 @@ struct data {
 	_Bool singleplayer;
 	_Bool pauseGame;
 	game_t game;
-	sem_t space;
-	sem_t clientsSem;
 	pthread_mutex_t mutex;
 };
 
@@ -67,6 +64,11 @@ void* client_message(void* arg) {
 			break;
 		
 		pthread_mutex_lock(&data->mutex);
+		if (data->isOff) {
+			pthread_mutex_unlock(&data->mutex);
+			break;
+		}
+
 		switch (ch) {
 			case 'w': set_direction(&game->snakes[client->id], UP); break;			
 			case 's': set_direction(&game->snakes[client->id], DOWN); break;			
@@ -77,7 +79,6 @@ void* client_message(void* arg) {
 	}
 	pthread_mutex_lock(&data->mutex);	
 	remove_client(data, client->id);
-	sem_post(&data->space);
 	pthread_mutex_unlock(&data->mutex);
 	close(client->client_fd);
 	free(client);
@@ -111,7 +112,6 @@ void* accept_clients(void* arg) {
 			client_data_t* client = malloc(sizeof(client_data_t));
 		client->client_fd = client_fd;
 		client->data = data;
-				sem_wait(&data->space);
 		pthread_mutex_lock(&data->mutex);
 
 		int id = add_snake(&data->game, nextID);
@@ -129,8 +129,8 @@ void* accept_clients(void* arg) {
 		data->clientData[id] = client;
 		data->clientCount++;
 		data->pauseGame = 1;
+		data->gameOver = 0;
 		pthread_mutex_unlock(&data->mutex);
-		sem_post(&data->clientsSem);
 
 		pthread_t client_th;
 		pthread_create(&client_th, NULL, client_message, client);
@@ -160,6 +160,10 @@ void* server_shutdown(void* arg) {
 			if (countdown == 0) {
 				pthread_mutex_lock(&data->mutex);
 				data->isOff = 1;
+				for (int i = 0; i < data->clientCount; i++) {
+					shutdown(data->clients[i], SHUT_RDWR);
+					close(data->clients[i]);
+				}
 				close(data->server_fd);
 				pthread_mutex_unlock(&data->mutex);
 			}
@@ -173,12 +177,18 @@ void* server_shutdown(void* arg) {
 
 void* game_loop(void* arg) {
 	data_t* data = (data_t*)arg;
-	
+
 	while (1) {
 		usleep(200000);
 
 		pthread_mutex_lock(&data->mutex);
 	
+		if(data->isOff) {
+			pthread_mutex_unlock(&data->mutex);
+
+			break;
+		}
+
 		time_t now = time(NULL);
 		data->game.elapsedTime = (int)difftime(now, data->game.startTime);
 
@@ -188,6 +198,16 @@ void* game_loop(void* arg) {
 				pthread_mutex_unlock(&data->mutex);
 				break;
 			}
+		}
+	
+		int dead = 0;
+		for (int i = 0; i < data->clientCount; i++) {
+			if(!data->game.snakes[i].alive)
+				dead++;
+		}
+
+		if (data->clientCount > 0 && dead == data->clientCount) {
+			data->gameOver = 1;
 		}
 
 		update_game(&data->game);	
@@ -247,8 +267,6 @@ int main(int argc, char** argv) {
 	data.pauseGame = 0;
 	data.clientCount = 0;
 	data.isOff = 0;
-	data.in = 0;
-	data.out = 0;
 	data.gameOver = 0;
 	data.singleplayer = (atoi(argv[2]) == 1);
 	_Bool hasObstacles = (atoi(argv[5]) == 2);
@@ -259,9 +277,6 @@ int main(int argc, char** argv) {
 		data.game.isTimed = 1;
 	}
 	pthread_mutex_init(&data.mutex, NULL);
-	sem_init(&data.space, 0, MAX_CLIENTS);
-	sem_init(&data.clientsSem, 0, 0);
-
 
 	pthread_t accept_th, shutdown_th, game_th;
 	pthread_create(&accept_th, NULL, accept_clients, &data);
@@ -273,7 +288,6 @@ int main(int argc, char** argv) {
 	pthread_detach(game_th);
 
 	pthread_mutex_destroy(&data.mutex);
-	sem_destroy(&data.space);
-	sem_destroy(&data.clientsSem);
+
 	return 0;
 }
