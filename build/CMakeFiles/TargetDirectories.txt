@@ -1,0 +1,6 @@
+/home/mkulla/POS_semestralna_praca/build/CMakeFiles/edit_cache.dir
+/home/mkulla/POS_semestralna_praca/build/CMakeFiles/rebuild_cache.dir
+/home/mkulla/POS_semestralna_praca/build/src/CMakeFiles/client.dir
+/home/mkulla/POS_semestralna_praca/build/src/CMakeFiles/server.dir
+/home/mkulla/POS_semestralna_praca/build/src/CMakeFiles/edit_cache.dir
+/home/mkulla/POS_semestralna_praca/build/src/CMakeFiles/rebuild_cache.dir

@@ -99,9 +99,10 @@ void* client_render(void* arg) {
 				const char* color = COLOR_RESET;
 
 				for (int i = 0; i < game.playerCount; i++) {
-					if (game.fruits[i].pos.x == x && game.fruits[i].pos.y == y)
+					if (game.fruits[i].pos.x == x && game.fruits[i].pos.y == y) {
 						printed = 'F';
 						color = COLOR_RESET;
+					}
 				}
 
 				for (int i = 0; i < game.playerCount; i++) {
@@ -116,9 +117,10 @@ void* client_render(void* arg) {
 				}
 
 				for (int i = 0; i < game.obstacleCount; i++) {
-					if (game.obstacles[i].pos.x == x && game.obstacles[i].pos.y == y)
+					if (game.obstacles[i].pos.x == x && game.obstacles[i].pos.y == y) {
 						printed = '@';
 						color = COLOR_RESET;
+					}
 				}
 
 				printf("%s%c%s", color, printed, COLOR_RESET);
@@ -322,7 +324,7 @@ int show_main_menu() {
 	return 0;
 }
 
-int main(int argc, char** argv) {
+int main(void) {
 
 	int quit = -1;
 	while (quit != 0)
