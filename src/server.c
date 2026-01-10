@@ -33,6 +33,7 @@ struct client_data {
 	int client_fd;
 	data_t* data;
 	int id;
+	pthread_t thread;
 };
 
 void remove_client(data_t* data, int index) {
@@ -72,15 +73,14 @@ void* client_message(void* arg) {
 		pthread_mutex_unlock(&data->mutex);
 	}
 	pthread_mutex_lock(&data->mutex);	
-	_Bool shutdown = data->isOff;
-	if (!shutdown) {
-		remove_client(data, client->id);
-	}
+	
+	remove_client(data, client->id);
+	
 	pthread_mutex_unlock(&data->mutex);
-	if (!shutdown) {
-		close(client->client_fd);
-		free(client);
-	}
+	
+	close(client->client_fd);
+	free(client);
+	
 	return NULL;
 }
 
@@ -88,7 +88,7 @@ void* accept_clients(void* arg) {
 	data_t* data = (data_t*)arg;
 	int nextID = 0;
 	
-	while (!data->isOff && !data->gameOver) {	
+	while (!data->isOff) {	
 		int client_fd = accept(data->server_fd, NULL, NULL);
 		if (client_fd < 0) {
 			usleep(10000);
@@ -126,9 +126,8 @@ void* accept_clients(void* arg) {
 		data->gameOver = 0;
 		pthread_mutex_unlock(&data->mutex);
 
-		pthread_t client_th;
-		pthread_create(&client_th, NULL, client_message, client);
-		pthread_detach(client_th);
+		pthread_create(&client->thread, NULL, client_message, client);
+		pthread_detach(client->thread);
 	}
 	
 	return NULL;
@@ -141,10 +140,9 @@ void* server_shutdown(void* arg) {
 	while (!data->isOff && countdown != 0) {	
 		pthread_mutex_lock(&data->mutex);
 		int count = data->clientCount;
-		_Bool gameOver = data->gameOver;
 		pthread_mutex_unlock(&data->mutex);
 
-		if (count == 0 || gameOver) {
+		if (count == 0) {
 			sleep(1);
 			countdown--;
 		
@@ -152,31 +150,22 @@ void* server_shutdown(void* arg) {
 		else
 			countdown = 10;
 	}
-
 	pthread_mutex_lock(&data->mutex);
 	data->isOff = 1;
-	pthread_mutex_unlock(&data->mutex);
-
-	sleep(1);
-
-	for (int i = 0; i < MAX_CLIENTS; i++) {
-		if (data->clientData[i]) {
-			shutdown(data->clientData[i]->client_fd, SHUT_RDWR);
-		}
-	}
-
-	pthread_mutex_lock(&data->mutex);
-	for (int i = 0; i < MAX_CLIENTS; i++) {
-		if (data->clientData[i]) {
-			close(data->clientData[i]->client_fd);
-			free(data->clientData[i]);
-			data->clientData[i] = NULL;
-		}
-	}
-
 	close(data->server_fd);
 	pthread_mutex_unlock(&data->mutex);
 		
+	for (int i = 0; i < MAX_CLIENTS; i++) {
+		pthread_mutex_lock(&data->mutex);
+        client_data_t* client = data->clientData[i];
+        data->clientData[i] = NULL;
+        pthread_mutex_unlock(&data->mutex);
+
+        /*if (client) {
+            pthread_join(client->thread, NULL);
+        }*/
+	}
+	
 	return NULL;
 }
 
@@ -188,36 +177,30 @@ void* game_loop(void* arg) {
 
 		pthread_mutex_lock(&data->mutex);
 	
-		if(data->gameOver) {
-			data->isOff = 1;
-			pthread_mutex_unlock(&data->mutex);
-			break;
-		}
+		if(!data->gameOver) {
+			time_t now = time(NULL);
+			data->game.elapsedTime = (int)difftime(now, data->game.startTime);
 
-		time_t now = time(NULL);
-		data->game.elapsedTime = (int)difftime(now, data->game.startTime);
-
-		if (data->game.isTimed) {
-			if (data->game.elapsedTime >= data->game.maxGameTime) {
-				data->gameOver = 1;
+			if (data->game.isTimed) {
+				if (data->game.elapsedTime >= data->game.maxGameTime) {
+					data->gameOver = 1;
+				}
 			}
+		
+			int dead = 0;
+			for (int i = 0; i < data->clientCount; i++) 
+				if(!data->game.snakes[i].alive)
+					dead++;
+			
+
+			if (data->clientCount > 0 && dead == data->clientCount) 
+				data->gameOver = 1;
+			
+
+			update_game(&data->game);	
 		}
-	
-		int dead = 0;
-		for (int i = 0; i < data->clientCount; i++) 
-			if(!data->game.snakes[i].alive)
-				dead++;
-		
-
-		if (data->clientCount > 0 && dead == data->clientCount) 
-			data->gameOver = 1;
-		
-
-		update_game(&data->game);	
-
 		for (int i = 0; i < data->clientCount; i++) {
-
-			ssize_t s = send(data->clients[i], &data->game, sizeof(game_t), 0);
+			send(data->clients[i], &data->game, sizeof(game_t), 0);
 		}
 
 		if (data->pauseGame) {
@@ -226,6 +209,8 @@ void* game_loop(void* arg) {
 		}
 		pthread_mutex_unlock(&data->mutex);
 	}
+
+
 
 	return NULL;
 }

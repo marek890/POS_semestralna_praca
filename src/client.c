@@ -149,9 +149,9 @@ void* client_render(void* arg) {
 			const char* color = colors[snake->color];
 
 			if (snake->alive) {
-				printf("%sHrac %d: %d%s\n", color, i + 1, score, COLOR_RESET);
+				printf("%sHrac %d: %d%s\n", color, snake->playerID + 1, score, COLOR_RESET);
 			} else {
-				printf("%sHrac %d: %d (DEAD)%s\n", color, i + 1, score, COLOR_RESET);
+				printf("%sHrac %d: %d (DEAD)%s\n", color, snake->playerID + 1, score, COLOR_RESET);
 			}
 		}
 		
