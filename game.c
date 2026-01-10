@@ -27,7 +27,7 @@ void init_game(game_t* game, _Bool hasObstacles, int width, int length) {
 }
 
 void update_game(game_t* game) {
-	for (int i = 0; i < game->playerCount; i++) {
+	for (int i = 0; i < MAX_PLAYERS; i++) {
 		snake_t* snake = &game->snakes[i];
 
 		if (!snake->alive) 
@@ -88,7 +88,7 @@ int add_snake(game_t* game, int id) {
 	if (game->playerCount >= MAX_PLAYERS)
 		return -1;
 
-	int colors[] = {1,2,3,4,5};
+	int colors[] = {0,1,2,3,4};
 	int index = game->playerCount;
 	snake_t* snake = &game->snakes[index];
 

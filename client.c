@@ -6,8 +6,15 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
-#include <ncurses.h>
+#include <termios.h>
 #include "game.h"
+
+#define COLOR_RESET   "\033[0m"
+#define COLOR_RED     "\033[31m"
+#define COLOR_GREEN   "\033[32m"
+#define COLOR_YELLOW  "\033[33m"
+#define COLOR_BLUE    "\033[34m"
+#define COLOR_MAGENTA "\033[35m"
 
 typedef struct {
 	int client_fd;
@@ -19,8 +26,8 @@ void* client_input(void* arg) {
 	data_t* data = (data_t*)arg;
 
 	while (data->isRunning) {
-		int ch = getch();
-		if (ch == ERR) {
+		char ch;
+		if (read(STDIN_FILENO, &ch, 1) <= 0) {
 			usleep(5000);
 			continue;
 		}
@@ -31,13 +38,8 @@ void* client_input(void* arg) {
 				pthread_mutex_lock(&data->mutex);
 				data->isRunning = 0;
 				shutdown(data->client_fd, SHUT_RDWR);
-				close(data->client_fd);
 				pthread_mutex_unlock(&data->mutex);
 				return NULL;
-			case KEY_UP:	out = 'w'; break;
-			case KEY_DOWN:	out = 's'; break;
-			case KEY_LEFT:	out = 'a'; break;
-			case KEY_RIGHT:	out = 'd'; break;
 			case 'w':
 			case 'a':
 			case 's':
@@ -62,90 +64,100 @@ void* client_render(void* arg) {
 	game_t game;
 	memset(&game, 0, sizeof(game));
 
+	const char* colors[] = {
+			COLOR_RED,
+			COLOR_GREEN,
+			COLOR_YELLOW,
+			COLOR_BLUE,
+			COLOR_MAGENTA
+		};
+
 	while (1) {
 		usleep(50000);
-		pthread_mutex_lock(&data->mutex);
-		int posX = game.width + 3;
-		
+
 		int r = recv(data->client_fd, &game, sizeof(game_t), 0);
+
+		pthread_mutex_lock(&data->mutex);
+		
 		if (r <= 0) {
 			data->isRunning = 0;
 			pthread_mutex_unlock(&data->mutex);
+			printf("\033[H\033[J");
 			break;
 		}
 
-		erase();
-	
-		for (int i = 0; i < game.width + 2; i++) {
-			mvaddch(0, i, '#');
-			mvaddch(game.length + 1, i, '#');
+		printf("\033[H\033[J");
+
+		for (int i = 0; i < game.width + 2; i++)
+			printf("#");
+		printf("\n");
+
+		for (int y = 0; y < game.length; y++) {
+			printf("#");
+			for (int x = 0; x < game.width; x++) {
+				char printed = ' ';
+				const char* color = COLOR_RESET;
+
+				for (int i = 0; i < game.playerCount; i++) {
+					if (game.fruits[i].pos.x == x && game.fruits[i].pos.y == y)
+						printed = 'F';
+						color = COLOR_RESET;
+				}
+
+				for (int i = 0; i < game.playerCount; i++) {
+					snake_t* snake = &game.snakes[i];
+					for (int b = 0; b < snake->length; b++) {
+						if (!snake->alive) continue;
+						if (snake->body[b].x == x && snake->body[b].y == y) {
+							printed = (b == 0) ? 'O': 'o';
+							color = colors[snake->color];
+						}
+					}
+				}
+
+				for (int i = 0; i < game.obstacleCount; i++) {
+					if (game.obstacles[i].pos.x == x && game.obstacles[i].pos.y == y)
+						printed = '@';
+						color = COLOR_RESET;
+				}
+
+				printf("%s%c%s", color, printed, COLOR_RESET);
+			}
+			printf("#\n");
 		}
 
-		for (int i = 0; i < game.length + 2; i++) {
-			mvaddch(i, 0, '#');
-			mvaddch(i, game.width + 1, '#');
-		}
+		for (int i = 0; i < game.width + 2; i++)
+			printf("#");
+		printf("\n");
 
-		for (int i = 0; i < game.obstacleCount; i++) {
-			mvaddch(game.obstacles[i].pos.y + 1, game.obstacles[i].pos.x + 1, '@');
-		} 
-		
+		printf("Pre odpojenie stlac Q\n");
+
 		if (game.isTimed) {
 			int remaining = game.maxGameTime - game.elapsedTime;
 			if (remaining < 0) remaining = 0;
-
-			mvprintw(1, posX, "ZOSTAVA:");
-			mvprintw(2, posX, "%02d:%02d", remaining / 60, remaining % 60);
-		}
-		else {
-			mvprintw(1, posX, "UPLYNULO:");
-			mvprintw(2, posX, "%02d:%02d", game.elapsedTime / 60, game.elapsedTime % 60);
+			printf("ZOSTAVA: %02d:%02d\n", remaining / 60, remaining % 60);
+		} else {
+			printf("UPLYNULO: %02d:%02d\n", game.elapsedTime / 60, game.elapsedTime % 60);
 		}
 
-		mvprintw(4, posX, "SKORE");
-
-		int deadSnakes = 0;
+		printf("SKORE:\n");
 		for (int i = 0; i < game.playerCount; i++) {
 			snake_t* snake = &game.snakes[i];
-			int score = snake->length - 1;
-	
-			attron(COLOR_PAIR(snake->color));
-			mvprintw(5 + i, posX, "Hrac %d: %d", snake->playerID, score);
-			attroff(COLOR_PAIR(snake->color));
+    		int score = snake->length - 1;
+			const char* color = colors[snake->color];
 
-			if (!snake->alive) {
-				deadSnakes++;
-			}
-
-			if (deadSnakes == game.playerCount) {
-				mvprintw(game.length / 2, game.width / 2 - 3, "GAME OVER!");
-				mvprintw(game.length / 2 + 1, game.width / 2 - 10, "Server sa vypne za 10s...");
-			}
-
-			for (int j = 0; j < snake->length; j++) {
-				if (!snake->alive) continue;
-				if (snake->body[j].x >= 0 && snake->body[j].x < game.width &&
-					snake->body[j].y >= 0 && snake->body[j].y < game.length) {
-						attron(COLOR_PAIR(snake->color));
-						mvaddch(snake->body[j].y + 1, snake->body[j].x + 1, j == 0 ? 'O' : 'o');
-						attroff(COLOR_PAIR(snake->color));
-				}
+			if (snake->alive) {
+				printf("%sHrac %d: %d%s\n", color, i + 1, score, COLOR_RESET);
+			} else {
+				printf("%sHrac %d: %d (DEAD)%s\n", color, i + 1, score, COLOR_RESET);
 			}
 		}
-
-		for (int i = 0; i < game.playerCount; i++) {
-			fruit_t* fruit = &game.fruits[i];
-			mvaddch(fruit->pos.y + 1, fruit->pos.x + 1, 'F');
-		}
-
-		mvprintw(15, posX, "Pre odpojenie stlac Q");
-
-		refresh();
+		
+		fflush(stdout);
 		
 		pthread_mutex_unlock(&data->mutex);
 
 	}
-	endwin();
 	return NULL;
 }
 
@@ -174,19 +186,13 @@ int connected(int port, data_t* data) {
 	}	
 
 	data->isRunning = 1;
-	initscr();
-	curs_set(0);
-	cbreak();
-	noecho();
-	keypad(stdscr, TRUE);
-	nodelay(stdscr, TRUE);
-	start_color();
-	use_default_colors();
-	init_pair(1, COLOR_RED, COLOR_BLACK);
-	init_pair(2, COLOR_GREEN, COLOR_BLACK);
-	init_pair(3, COLOR_BLUE, COLOR_BLACK);
-	init_pair(4, COLOR_YELLOW, COLOR_BLACK);
-	init_pair(5, COLOR_CYAN, COLOR_BLACK);
+
+	struct termios original;
+    
+    tcgetattr(STDIN_FILENO, &original);
+    struct termios raw = original;
+    raw.c_lflag &= ~(ECHO | ICANON);
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 
 	pthread_mutex_init(&data->mutex, NULL);
 	pthread_t input_th, render_th;
@@ -196,8 +202,9 @@ int connected(int port, data_t* data) {
 	pthread_join(input_th, NULL);
 	pthread_join(render_th, NULL);
 
+	tcsetattr(STDIN_FILENO, TCSAFLUSH, &original);
+
 	pthread_mutex_destroy(&data->mutex);
-	endwin();
 	close(data->client_fd);
 	
 	return -1;
@@ -213,6 +220,7 @@ int show_main_menu() {
 	int y = 0;
 	int port = 0;
 	data_t data;
+	memset(&data, 0, sizeof(data));
 	
 	do {
 		printf("****Hlavné menu****\n");
@@ -292,11 +300,12 @@ int show_main_menu() {
 		pid_t pid = fork();
 		if (pid < 0) {
 			perror("Fork zlyhal\n");
-			exit(1);
+			_exit(1);
 		}
 
 		if (pid == 0) {
 			execl("./server", "./server", portStr, multiplayerStr, regimeStr, timeStr, worldStr, xStr, yStr, NULL);
+			_exit(1);
 		}
 		else {
 			sleep(1);
