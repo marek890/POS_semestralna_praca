@@ -216,11 +216,8 @@ void* game_loop(void* arg) {
 		update_game(&data->game);	
 
 		for (int i = 0; i < data->clientCount; i++) {
-			//if (data->game.snakes[i].alive) {
-				ssize_t s = send(data->clients[i], &data->game, sizeof(game_t), 0);
-			//	if (s <= 0)
-			//		data->game.snakes[i].alive = 0;
-			//}
+
+			ssize_t s = send(data->clients[i], &data->game, sizeof(game_t), 0);
 		}
 
 		if (data->pauseGame) {
